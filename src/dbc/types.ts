@@ -1,10 +1,10 @@
 import { Client, Pool, TLSOptions } from "../../deps.ts";
 
-export interface DbSecureType extends TLSOptions{
+export interface DbSecureType extends TLSOptions {
     secureAccess?: boolean;
     secureCert?: string;
     secureKey?: string;
-    sslMode?: string;
+    sslMode?: "require" | "prefer" | "disable";
 }
 
 export interface DbConnectionOptionsType {

@@ -10,11 +10,12 @@ export class DbPg {
     private readonly port: number;
     private readonly poolSize: number;
     private readonly checkAccess: boolean;
-    private readonly dbUrl: string;
+    private readonly connectionString: string;
     private readonly config: ClientConfiguration;
     private dbPool: Pool;
     private dbClient: Client;
-
+    private readonly encodedUsername: string;
+    private readonly encodedPassword: string;
 
     constructor(dbConfig: DbConfigType, options?: DbConnectionOptionsType) {
         this.hostname = dbConfig?.hostname || "";
@@ -25,7 +26,17 @@ export class DbPg {
         this.port = Number(dbConfig?.port) || 5432;
         this.poolSize = dbConfig?.poolSize || 20;
         this.checkAccess = options?.checkAccess !== false;
-        this.dbUrl = `postgresql://${this.username}:${this.password}@${this.hostname}:${this.port}/${this.database}`;
+        // Encode username and password for the connection string
+        this.encodedUsername = encodeURIComponent(this.username);
+        this.encodedPassword = encodeURIComponent(this.password);
+        this.connectionString = `postgres://${this.encodedUsername}:${this.encodedPassword}@${this.hostname}:${this.port}/${this.database}`;
+        if (dbConfig.applicationName) {
+            this.connectionString += `?application_name=${dbConfig.applicationName}`;
+        }
+        if (dbConfig.secureOption && dbConfig.secureOption.sslMode) {
+            this.connectionString += `&sslmode=${dbConfig.secureOption.sslMode}`;
+        }
+        //  "postgres://user:password@localhost:5432/test?application_name=my_custom_app&sslmode=require";
         this.config = {
             applicationName: dbConfig.applicationName || "mc-app",
             connection     : {
