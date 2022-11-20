@@ -86,15 +86,14 @@ class SaveRecord extends Crud {
             try {
                 // check task-permission
                 if (this.checkAccess) {
-                    const accessRes = await this.checkTaskAccess(this.userInfo)
+                    const accessRes = await this.checkTaskAccess()
                     if (accessRes.code != "success") {
                         return accessRes
                     }
                 }
                 // create records
                 return await this.createRecord();
-            } catch (e) {
-                // console.error(e);
+            } catch (_e) {
                 return getResMessage("insertError", {
                     message: "Error-inserting/creating new record.",
                 });
@@ -206,8 +205,8 @@ class SaveRecord extends Crud {
         return taskType
     }
 
-    async computeItems(modelOptions: ModelOptionsType = this.modelOptions): Promise<ActionParamTaskType> {
-        let updateItems: ActionParamsType = [],
+    computeItems(modelOptions: ModelOptionsType = this.modelOptions): ActionParamTaskType {
+        const updateItems: ActionParamsType = [],
             recordIds: Array<string> = [],
             createItems: ActionParamsType = [];
         // cases - actionParams.length === 1 OR > 1
@@ -215,7 +214,7 @@ class SaveRecord extends Crud {
             let item = this.actionParams[0]
             if (!item["id"] || item["id"] === "") {
                 // exclude any traces/presence of id, especially without concrete value ("", null, undefined)
-                const {id, ...saveParams} = item;
+                const {_id, ...saveParams} = item;
                 item = saveParams;
                 if (this.recordIds.length > 0 || !isEmptyObject(this.queryParams)) {
                     // update existing record(s), by recordIds or queryParams
@@ -258,7 +257,7 @@ class SaveRecord extends Crud {
                     item["isActive"] = true;
                 }
                 updateItems.push(item);
-                recordIds.push(item["id"]);
+                recordIds.push(item["id"] as string);
             }
             this.createItems = createItems;
             this.updateItems = updateItems;
@@ -279,11 +278,11 @@ class SaveRecord extends Crud {
                         item["isActive"] = true;
                     }
                     updateItems.push(item);
-                    recordIds.push(item["id"]);
+                    recordIds.push(item["id"] as string);
                 } else {
                     // create new document/record
                     // exclude any traces/presence of id, especially without concrete value ("", null, undefined)
-                    const {id, ...saveParams} = item;
+                    const {_id, ...saveParams} = item;
                     const itemRec = saveParams;
                     if (modelOptions.actorStamp) {
                         itemRec["createdBy"] = this.userId;
@@ -318,12 +317,12 @@ class SaveRecord extends Crud {
                 message: "Unable to create new record(s), due to incomplete/incorrect input-parameters. ",
             });
         }
-        // create a transaction session
+        // TODO: create a transaction session
         const client = await this.appDb.connect()
         try {
             // insert/create multiple records and audit-log
             let recordsCount = 0
-            let recordIds: Array<string> = []
+            const recordIds: Array<string> = []
             const {createQueryObject, ok, message} = computeCreateQuery(this.table, this.createItems)
             if (!ok) {
                 return getResMessage("saveError", {

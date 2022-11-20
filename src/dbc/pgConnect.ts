@@ -1,106 +1,110 @@
-import { Pool, Client } from "../../deps.ts";
-import { DbSecureType, DbConnectionOptionsType, DbConfigType } from "./types.ts";
+import { Pool, Client, ClientConfiguration } from "../../deps.ts";
+import { DbConnectionOptionsType, DbConfigType } from "./types.ts";
 
 export class DbPg {
-    private readonly host: string;
+    private readonly hostname: string;
     private readonly username: string;
     private readonly password: string;
     private readonly database: string;
     private readonly location: string;
     private readonly port: number;
     private readonly poolSize: number;
-    private readonly secureOption: DbSecureType;
-    private readonly options: DbConnectionOptionsType;
     private readonly checkAccess: boolean;
     private readonly dbUrl: string;
+    private readonly config: ClientConfiguration;
+    private dbPool: Pool;
+    private dbClient: Client;
+
 
     constructor(dbConfig: DbConfigType, options?: DbConnectionOptionsType) {
-        this.host = dbConfig?.host || "";
+        this.hostname = dbConfig?.hostname || "";
         this.username = dbConfig?.username || "";
         this.password = dbConfig?.password || "";
         this.database = dbConfig?.database || "";
         this.location = dbConfig?.location || "";
         this.port = Number(dbConfig?.port) || 5432;
         this.poolSize = dbConfig?.poolSize || 20;
-        this.secureOption = dbConfig?.secureOption || {secureAccess: false, secureCert: "", secureKey: ""};
         this.checkAccess = options?.checkAccess !== false;
-        this.dbUrl = `postgresql://${this.username}:${this.password}@${this.host}:${this.port}/${this.database}`
-        this.options = {
-            max                    : options?.max || this.poolSize,
-            idleTimeoutMillis      : options?.idleTimeoutMillis || 30000,
-            connectionTimeoutMillis: options?.connectionTimeoutMillis || 5000,
+        this.dbUrl = `postgresql://${this.username}:${this.password}@${this.hostname}:${this.port}/${this.database}`;
+        this.config = {
+            applicationName: dbConfig.applicationName || "mc-app",
+            connection     : {
+                attempts: 1,
+                interval: 500,
+            },
+            database       : this.database,
+            hostname       : this.hostname,
+            host_type      : dbConfig.hostType || "tcp",
+            password       : this.password,
+            options        : {
+                "max_index_keys": "32",
+            },
+            port           : this.port,
+            user           : this.username,
+            tls            : {
+                enforce       : dbConfig.secureOption?.enforce || Deno.env.get("APP_ENV") !== "development",
+                enabled       : dbConfig.secureOption?.enabled || Deno.env.get("APP_ENV") !== "development",
+                caCertificates: dbConfig.secureOption?.caCertificates || [],
+            },
         };
+        this.dbPool = this.pgPool();
+        this.dbClient = this.pgClient();
     }
 
+    // connection pools
     pgPool() {
-        const configPool = {
-            ...this.options,
-            hostname: this.host,
-            port    : this.port,
-            database: this.database,
-            user    : this.username,
-            password: this.password,
-        }
-        return new Pool(configPool, this.poolSize)
+        this.dbPool = new Pool(this.config, this.poolSize);
+        return this.dbPool;
     }
 
+    // client-db connection
     pgClient() {
-        const configClient = {
-            host    : this.host,
-            port    : this.port,
-            database: this.database,
-            user    : this.username,
-            password: this.password,
-        }
-        return new Client(configClient)
+        this.dbClient = new Client(this.config);
+        return this.dbClient;
     }
 
     pgClientTest() {
-        // try / check pgDB connection, usually for multiple queries / transaction
         (async () => {
-            const client = await this.pgPool().connect();
+            const dbClient = this.pgClient();
+            await dbClient.connect();
             try {
-                console.log(`PostgresDB connected: ${this.host}:${this.port}/${this.database}`);
-                const res = await client.queryArray('SELECT NOW() as now');
+                console.log(`PostgresDB connected[CLIENT]: ${this.hostname}:${this.port}/${this.database}`);
+                const res = await dbClient.queryObject('SELECT NOW() as now');
                 console.log('pgSQL-test-pgPoolClient-query-result: ', res.rows[0]);
             } finally {
-                if (client) await client.release();
-                console.log('pgSQL-test-pgPoolClient-query connection released');
+                await dbClient?.end();
+                console.log('pgSQL-test-pgPoolClient-query connection end');
             }
         })().catch(error => {
             // catches all errors within the async function, client and try-block
-            console.error('Postgres-DB connect/query error:' + error.stack);
+            console.error('Postgres-DB connect/query[CLIENT] error:' + error.stack);
         });
     }
 
     pgPoolTest() {
-        // try / check pgDB connection, preferably for single query operation, removes the risk of leaking a client
         (async () => {
+            const dbPool = this.pgPool();
+            const poolClient = await dbPool.connect();
             try {
-                console.log(`PostgresDB connected: ${this.host}:${this.port}/${this.database}`);
-                // TODO: review the pgPool query method
-                const dbClient = await this.pgPool().connect()
-                const res = await dbClient.queryArray('SELECT NOW() as now');
+                console.log(`PostgresDB connected[POOL-CLIENT]: ${this.hostname}:${this.port}/${this.database}`);
+                const res = await poolClient.queryObject('SELECT NOW() as now');
                 console.log('pgSQL-test-pgPool-query(1)-result: ', res.rows[0]);
             } finally {
+                await poolClient.release();
                 console.log('pgSQL-test-pgPool-query(1) connection released');
             }
         })().catch(error => {
             // catches all errors within the async function, client and try-block
-            console.error('Postgres-DB, pgPool, connect/query error:' + error.stack);
+            console.error('Postgres-DB, pgPool, connect/query[POOL] error:' + error.stack);
         });
     }
 
     async closePgPool() {
-        return await this.pgPool().end()
+        return await this.pgPool().end();
     }
 
     async closePgClient() {
-        return await this.pgClient().end()
-    }
-
-    get dbUri(): string {
-        return this.dbUrl;
+        return await this.pgClient().end();
     }
 
 }

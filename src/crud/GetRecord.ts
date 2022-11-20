@@ -146,28 +146,26 @@ class GetRecord extends Crud {
                 const res = await this.getCurrentRecords("queryParams")
                 if (res.code === "success") {
                     // save copy in the cache
+                    const resValue = res.value as unknown as GetResultType
                     const resultValue: GetResultType = {
-                        records: res.value.records,
-                        stats  : res.value.stats,
+                        records: resValue.records,
+                        stats  : resValue.stats,
                         logRes,
                     }
                     if (this.cacheGetResult) {
                         const cacheParams: HashCacheParamsType = {
                             key   : this.cacheKey,
                             hash  : this.table,
-                            value : resultValue,
+                            value : resultValue as unknown as ObjectType,
                             expire: this.cacheExpire,
                         }
                         setHashCache(cacheParams);
                     }
                     return getResMessage("success", {
-                        value: resultValue,
+                        value: resultValue as unknown as ObjectType,
                     });
                 }
-                return getResMessage("notFound", {
-                    message: res.message,
-                    value  : res,
-                });
+                return res;
             } catch (error) {
                 return getResMessage("notFound", {
                     value: error,
@@ -178,16 +176,17 @@ class GetRecord extends Crud {
         if (this.checkAccess) {
             const accessRes = await this.checkLoginStatus()
             if (accessRes.code === "success") {
-                const userRec: CheckAccessType = accessRes.value;
+                const userRec = accessRes.value as unknown as CheckAccessType;
                 // get all records, up to the permissible limit - admin-user only
                 if (userRec.isAdmin && userRec.isActive) {
                     try {
                         const res = await this.getCurrentRecords()
                         if (res.code === "success") {
                             // save copy in the cache
+                            const resValue = res.value as unknown as GetResultType
                             const resultValue: GetResultType = {
-                                records: res.value.records,
-                                stats  : res.value.stats,
+                                records: resValue.records,
+                                stats  : resValue.stats,
                                 logRes,
                             }
                             // cache records not implemented, for consistency & performance reasons
@@ -195,12 +194,12 @@ class GetRecord extends Crud {
                             // setHashCache(this.cacheKey, this.table, resultValue, this.cacheExpire);
                             // }
                             return getResMessage("success", {
-                                value: resultValue,
+                                value: resultValue as unknown as ObjectType,
                             });
                         }
                         return getResMessage("notFound", {
                             message: res.message,
-                            value  : res,
+                            value  : res.value,
                         });
                     } catch (error) {
                         return getResMessage("notFound", {
@@ -217,9 +216,10 @@ class GetRecord extends Crud {
                         const res = await this.getCurrentRecords("queryParams")
                         if (res.code === "success") {
                             // save copy in the cache
+                            const resValue = res.value as unknown as GetResultType
                             const resultValue: GetResultType = {
-                                records: res.value.records,
-                                stats  : res.value.stats,
+                                records: resValue.records,
+                                stats  : resValue.stats,
                                 logRes,
                             }
                             // cache records not implemented, for consistency & performance reasons
@@ -227,13 +227,10 @@ class GetRecord extends Crud {
                             // setHashCache(this.cacheKey, this.table, resultValue, this.cacheExpire);
                             // }
                             return getResMessage("success", {
-                                value: resultValue,
+                                value: resultValue as unknown as ObjectType,
                             });
                         }
-                        return getResMessage("notFound", {
-                            message: res.message,
-                            value  : res,
-                        });
+                        return res;
                     } catch (error) {
                         return getResMessage("notFound", {
                             value: error,
@@ -248,9 +245,10 @@ class GetRecord extends Crud {
                 const res = await this.getCurrentRecords()
                 if (res.code === "success") {
                     // save copy in the cache
+                    const resValue = res.value as unknown as GetResultType
                     const resultValue: GetResultType = {
-                        records: res.value.records,
-                        stats  : res.value.stats,
+                        records: resValue.records,
+                        stats  : resValue.stats,
                         logRes,
                     }
                     // cache all-table records not implemented, for performance reasons
@@ -258,13 +256,10 @@ class GetRecord extends Crud {
                     // setHashCache(this.cacheKey, this.table, resultValue, this.cacheExpire);
                     // }
                     return getResMessage("success", {
-                        value: resultValue,
+                        value: resultValue as unknown as ObjectType,
                     });
                 }
-                return getResMessage("notFound", {
-                    message: res.message,
-                    value  : res,
-                });
+                return res;
             } catch (error) {
                 return getResMessage("notFound", {
                     value: error,

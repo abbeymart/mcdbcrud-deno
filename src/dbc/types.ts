@@ -1,6 +1,6 @@
-import { Client, Pool } from "../../deps.ts";
+import { Client, Pool, TLSOptions } from "../../deps.ts";
 
-export interface DbSecureType {
+export interface DbSecureType extends TLSOptions{
     secureAccess?: boolean;
     secureCert?: string;
     secureKey?: string;
@@ -21,7 +21,7 @@ export interface DbConnectionOptionsType {
 
 export interface DbConfigType {
     dbType?: string;
-    host?: string;
+    hostname?: string;
     username?: string;
     password?: string;
     database?: string;
@@ -36,6 +36,8 @@ export interface DbConfigType {
     max?: number;
     idleTimeoutMillis?: number;
     connectionTimeoutMillis?: number;
+    applicationName?: string;
+    hostType?: "tcp" | "socket",
 }
 
 export type DbConnectionType = Pool | Client
