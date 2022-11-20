@@ -5,12 +5,12 @@
  */
 
 // Import required module(s)
-import { getHashCache, HashCacheParamsType, QueryHashCacheParamsType, setHashCache } from "@mconnect/mccache";
-import { getResMessage, ResponseMessage } from "@mconnect/mcresponse";
-import { Crud } from "./Crud";
-import { CheckAccessType, CrudOptionsType, CrudParamsType, GetResultType, LogRecordsType, TaskTypes } from "./types";
-import { isEmptyObject } from "./validate";
-import { AuditLogOptionsType } from "../auditlog";
+import { getHashCache, HashCacheParamsType, QueryHashCacheParamsType, setHashCache } from "../../deps.ts";
+import { getResMessage, ResponseMessage } from "../../deps.ts";
+import { Crud } from "./Crud.ts";
+import { CheckAccessType, CrudOptionsType, CrudParamsType, GetResultType, LogRecordsType, TaskTypes } from "./types.ts";
+import { isEmptyObject } from "./validate.ts";
+import { AuditLogOptionsType } from "../auditlog/index.ts";
 
 class GetRecord extends Crud {
     constructor(params: CrudParamsType, options: CrudOptionsType = {}) {

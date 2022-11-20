@@ -6,9 +6,8 @@
  */
 
 // Import required module/function(s)
-import { getResMessage, ResponseMessage } from "@mconnect/mcresponse";
-import { deleteHashCache, QueryHashCacheParamsType } from "@mconnect/mccache";
-import { Crud } from "./Crud";
+import { getResMessage, ResponseMessage, deleteHashCache, QueryHashCacheParamsType} from "../../deps.ts";
+import { Crud } from "./Crud.ts";
 import {
     ActionParamsType,
     ActionParamTaskType, AuditLogOptionsType,
@@ -16,15 +15,15 @@ import {
     CrudParamsType, excludeEmptyIdFields, LogRecordsType,
     ModelOptionsType,
     TaskTypes
-} from "..";
-import { isEmptyObject } from "./validate";
+} from "../index.ts";
+import { isEmptyObject } from "./validate.ts";
 import {
     computeCreateQuery,
     computeUpdateQuery,
     computeUpdateQueryById,
     computeUpdateQueryByIds,
     computeUpdateQueryByParam
-} from "./helpers";
+} from "./helpers/index.ts";
 
 class SaveRecord extends Crud {
     protected modelOptions: ModelOptionsType;

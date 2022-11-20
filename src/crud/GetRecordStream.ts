@@ -5,14 +5,14 @@
  */
 
 // Import required module(s)
-import { Crud } from "./Crud";
-import { CrudOptionsType, CrudParamsType } from "./types";
+import { Crud } from "./Crud.ts";
+import { CrudOptionsType, CrudParamsType } from "./types.ts";
 import {
     computeSelectQueryAll,
     computeSelectQueryByIds,
     computeSelectQueryByParams
-} from "./helpers";
-import { PoolClient } from "pg";
+} from "./helpers/index.ts";
+import { PoolClient, } from "../../deps.ts";
 
 const Cursor = require("pg-cursor")
 

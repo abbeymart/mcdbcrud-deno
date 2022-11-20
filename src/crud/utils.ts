@@ -1,5 +1,5 @@
 import { ActionParamsType, ActionParamType, CrudParamsType, TaskTypes, isEmptyObject } from "..";
-import { getResMessage, ResponseMessage } from "@mconnect/mcresponse";
+import { getResMessage, ResponseMessage } from "../../deps.ts";
 import sanitize from "sanitize-html";
 import { gunzipSync, gzipSync } from "zlib";
 

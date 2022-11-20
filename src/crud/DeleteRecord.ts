@@ -6,17 +6,16 @@
  */
 
 // Import required module/function(s)
-import { getResMessage, ResponseMessage } from "@mconnect/mcresponse";
-import { deleteHashCache, QueryHashCacheParamsType } from "@mconnect/mccache";
-import { Crud } from "./Crud";
-import { CrudOptionsType, CrudParamsType, LogRecordsType, TaskTypes } from "./types";
-import { isEmptyObject } from "./validate";
+import { getResMessage, ResponseMessage, deleteHashCache, QueryHashCacheParamsType } from "../../deps.ts";
+import { Crud } from "./Crud.ts";
+import { CrudOptionsType, CrudParamsType, LogRecordsType, TaskTypes } from "./types.ts";
+import { isEmptyObject } from "./validate.ts";
 import {
     computeDeleteQueryById,
     computeDeleteQueryByIds,
     computeDeleteQueryByParam
-} from "./helpers";
-import { AuditLogOptionsType } from "../auditlog";
+} from "./helpers/index.ts";
+import { AuditLogOptionsType } from "../auditlog/index.ts";
 
 class DeleteRecord extends Crud {
     constructor(params: CrudParamsType, options: CrudOptionsType = {}) {

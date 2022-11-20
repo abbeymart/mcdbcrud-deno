@@ -5,12 +5,11 @@
  */
 
 // Import required module/function(s)
-import { getResMessage, getParamsMessage, ResponseMessage } from "@mconnect/mcresponse";
-import { validateLoadParams } from "./ValidateCrudParam";
-import { checkDb } from "../dbc";
-import { ActionParamsType, CrudOptionsType, CrudParamsType, UserInfoType } from "./types";
-import { Pool } from "pg";
-import { isEmptyObject } from "./validate";
+import { getResMessage, getParamsMessage, ResponseMessage, Pool } from "../../deps.ts";
+import { validateLoadParams } from "./ValidateCrudParam.ts";
+import { checkDb } from "../dbc/index.ts";
+import { ActionParamsType, CrudOptionsType, CrudParamsType, UserInfoType } from "./types.ts";
+import { isEmptyObject } from "./validate.ts";
 
 class LoadRecord {
     protected params: CrudParamsType;
