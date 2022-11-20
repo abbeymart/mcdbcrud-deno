@@ -6,7 +6,7 @@ export { setHashCache, getHashCache, deleteHashCache, clearHashCache, } from "ht
 export type { QueryHashCacheParamsType, HashCacheParamsType } from "https://deno.land/x/mccache@v0.2.2/mod.ts";
 
 export { Client, Pool, PoolClient, } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
-export { QueryObjectResult, QueryResult, QueryArrayResult, } from "https://deno.land/x/postgres@v0.17.0/query/query.ts";
+export type { QueryObjectResult, QueryResult, QueryArrayResult, QueryOptions, QueryObjectOptions } from "https://deno.land/x/postgres@v0.17.0/query/query.ts";
 export type { ClientConfiguration, TLSOptions } from "https://deno.land/x/postgres@v0.17.0/connection/connection_params.ts";
 
 

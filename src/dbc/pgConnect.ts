@@ -1,6 +1,9 @@
 import { Pool, Client, ClientConfiguration } from "../../deps.ts";
 import { DbConnectionOptionsType, DbConfigType } from "./types.ts";
 
+// TODO: review startup with Deno environment variables
+// PGUSER=user PGPASSWORD=admin PGDATABASE=test deno run --allow-net --allow-env database.js
+
 export class DbPg {
     private readonly hostname: string;
     private readonly username: string;
@@ -36,11 +39,11 @@ export class DbPg {
         if (dbConfig.secureOption && dbConfig.secureOption.sslMode) {
             this.connectionString += `&sslmode=${dbConfig.secureOption.sslMode}`;
         }
-        //  "postgres://user:password@localhost:5432/test?application_name=my_custom_app&sslmode=require";
+        //  TODO: review caCertificates value, from client/requester
         this.config = {
             applicationName: dbConfig.applicationName || "mc-app",
             connection     : {
-                attempts: 1,
+                attempts: 3,
                 interval: 500,
             },
             database       : this.database,
@@ -62,9 +65,9 @@ export class DbPg {
         this.dbClient = this.pgClient();
     }
 
-    // connection pools
+    // connection pools - with lazy connections activation
     pgPool() {
-        this.dbPool = new Pool(this.config, this.poolSize);
+        this.dbPool = new Pool(this.config, this.poolSize, true);
         return this.dbPool;
     }
 

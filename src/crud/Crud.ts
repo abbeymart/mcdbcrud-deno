@@ -5,7 +5,7 @@
  */
 
 // Import required module/function(s)/types
-import { getResMessage, ResponseMessage, Pool, PoolClient, QueryObjectResult } from "../../deps.ts";
+import { getResMessage, ResponseMessage, Pool, PoolClient, QueryObjectResult, QueryObjectOptions } from "../../deps.ts";
 import {
     ActionParamsType,
     ActionParamType,
@@ -180,7 +180,35 @@ export class Crud {
     }
 
     // implement toString method
-    protected toString = (): string => `CRUD Instance Information: ${this}`
+    protected toString = (): string => `CRUD Instance Information: ${this}`;
+
+    // recordsCount method query the current/instance DB-table and returns totalRecords
+    async recordsCount(): Promise<RecordCountResultType> {
+        try {
+            // totalRecordsCount from the table
+            const countQuery = `SELECT COUNT(*) AS totalrows FROM ${this.table}`
+            const countRowsRes = await this.appDb.queryObject(countQuery) as QueryObjectResult
+            const totalRows = Number(countRowsRes.rows[0].totalrows)
+            if (totalRows < 1) {
+                return {
+                    totalRecords: 0,
+                    ok          : false,
+                    message     : "Total records count - no records found",
+                }
+            }
+            return {
+                totalRecords: totalRows,
+                ok          : true,
+                message     : "success",
+            }
+        } catch (e) {
+            return {
+                totalRecords: 0,
+                ok          : false,
+                message     : `${e.message}`,
+            }
+        }
+    }
 
     // ownerRecordsCount method query the current/instance DB-table and returns totalRecords for the current user
     async ownerRecordsCount(): Promise<OwnerRecordCountResultType> {
@@ -208,34 +236,6 @@ export class Crud {
         } catch (e) {
             return {
                 ownerRecords: 0,
-                ok          : false,
-                message     : `${e.message}`,
-            }
-        }
-    }
-
-    // recordsCount method query the current/instance DB-table and returns totalRecords
-    async recordsCount(): Promise<RecordCountResultType> {
-        try {
-            // totalRecordsCount from the table
-            const countQuery = `SELECT COUNT(*) AS totalrows FROM ${this.table}`
-            const countRowsRes = await this.appDb.queryObject(countQuery) as QueryObjectResult
-            const totalRows = Number(countRowsRes.rows[0].totalrows)
-            if (totalRows < 1) {
-                return {
-                    totalRecords: 0,
-                    ok          : false,
-                    message     : "Total records count - no records found",
-                }
-            }
-            return {
-                totalRecords: totalRows,
-                ok          : true,
-                message     : "success",
-            }
-        } catch (e) {
-            return {
-                totalRecords: 0,
                 ok          : false,
                 message     : `${e.message}`,
             }
@@ -274,15 +274,16 @@ export class Crud {
                 return validDb;
             }
             // totalRecordsCount from the table
-            const recordsCountRes = await this.recordsCount()
-            const totalRows = recordsCountRes.totalRecords
+            const recordsCountRes = await this.recordsCount();
+            const totalRows = recordsCountRes.totalRecords;
             if (!recordsCountRes.ok || totalRows < 1) {
                 return getResMessage("notFound", {
                     message: recordsCountRes.message,
-                })
+                });
             }
-            let selectQueryResult: SelectQueryResult
-            let recRes: QueryObjectResult
+            let selectQueryResult: SelectQueryResult;
+            let recRes: QueryObjectResult;
+            let queryConfig: QueryObjectOptions;
 
             switch (by.toLowerCase()) {
                 case "id":
@@ -290,13 +291,13 @@ export class Crud {
                     if (this.recordIds.length === 1) {
                         selectQueryResult = computeSelectQueryById(this.modelRef, this.table, this.recordIds[0], {
                             skip : this.skip,
-                            limit: this.limit
-                        })
+                            limit: this.limit,
+                        });
                     } else {
                         selectQueryResult = computeSelectQueryByIds(this.modelRef, this.table, this.recordIds, {
                             skip : this.skip,
-                            limit: this.limit
-                        })
+                            limit: this.limit,
+                        });
                     }
                     if (!selectQueryResult.ok) {
                         return getResMessage("readError", {
@@ -305,18 +306,23 @@ export class Crud {
                                 selectQuery: selectQueryResult.selectQueryObject.selectQuery,
                                 fieldValues: selectQueryResult.selectQueryObject.fieldValues,
                                 recordIds  : this.recordIds,
-                            }
-                        })
+                            },
+                        });
                     }
                     // get records
-                    recRes = await this.appDb.queryObject(selectQueryResult.selectQueryObject.selectQuery, selectQueryResult.selectQueryObject.fieldValues)
+                    queryConfig = {
+                        camelcase: true,
+                        text: selectQueryResult.selectQueryObject.selectQuery,
+                        args: selectQueryResult.selectQueryObject.fieldValues,
+                    };
+                    recRes = await this.appDb.queryObject(queryConfig);
                     break;
                 case "queryparams":
                     // get records by query-params
                     selectQueryResult = computeSelectQueryByParams(this.modelRef, this.table, this.queryParams, {
                         skip : this.skip,
-                        limit: this.limit
-                    })
+                        limit: this.limit,
+                    });
                     if (!selectQueryResult.ok) {
                         return getResMessage("readError", {
                             message: selectQueryResult.message,
@@ -325,16 +331,21 @@ export class Crud {
                                 fieldValues: selectQueryResult.selectQueryObject.fieldValues,
                                 queryParams: this.queryParams,
                             }
-                        })
+                        });
                     }
                     // query records
-                    recRes = await this.appDb.queryObject(selectQueryResult.selectQueryObject.selectQuery, selectQueryResult.selectQueryObject.fieldValues)
+                    queryConfig = {
+                        camelcase: true,
+                        text: selectQueryResult.selectQueryObject.selectQuery,
+                        args: selectQueryResult.selectQueryObject.fieldValues,
+                    };
+                    recRes = await this.appDb.queryObject(queryConfig);
                     break;
                 default:
                     // get all records
                     selectQueryResult = computeSelectQueryAll(this.modelRef, this.table, {
                         skip : this.skip,
-                        limit: this.limit
+                        limit: this.limit,
                     })
                     if (!selectQueryResult.ok) {
                         return getResMessage("readError", {
@@ -346,11 +357,16 @@ export class Crud {
                         })
                     }
                     // query records
-                    recRes = await this.appDb.queryObject(selectQueryResult.selectQueryObject.selectQuery, selectQueryResult.selectQueryObject.fieldValues)
+                    queryConfig = {
+                        camelcase: true,
+                        text: selectQueryResult.selectQueryObject.selectQuery,
+                        args: selectQueryResult.selectQueryObject.fieldValues,
+                    };
+                    recRes = await this.appDb.queryObject(queryConfig);
                     break;
             }
             // compute records
-            const records = this.computeQueryRecords(recRes);
+            const records = recRes.rows;
             // check records result
             if (records.length > 0) {
                 // update crud instance current-records value

@@ -393,11 +393,11 @@ class SaveRecord extends Crud {
         }
         // updated record(s)
         // create a transaction session
-        const client = await this.appDb.connect()
+        const client = this.appDb
         try {
             // check/validate update/upsert command for multiple records
             let recordsCount = 0
-            let recordIds: Array<string> = []
+            const recordIds: Array<string> = []
             const {updateQueryObjects, ok, message} = computeUpdateQuery(this.table, this.updateItems)
             if (!ok) {
                 return getResMessage("saveError", {
@@ -410,7 +410,7 @@ class SaveRecord extends Crud {
                 })
             }
             // trx starts | include returning id for each insert
-            await client.query("BEGIN")
+            await client.queryObject("BEGIN")
             for await (const updateQueryObject of updateQueryObjects) {
                 const res = await client.query(updateQueryObject.updateQuery, updateQueryObject.fieldValues)
                 if (res.rowCount > 0 && res.rows[0].id) {
