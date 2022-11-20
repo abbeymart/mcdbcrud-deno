@@ -6,7 +6,9 @@
  */
 
 // Import required module/function(s)
-import { getResMessage, ResponseMessage, deleteHashCache, QueryHashCacheParamsType } from "../../deps.ts";
+import {
+    getResMessage, ResponseMessage, deleteHashCache, QueryHashCacheParamsType, QueryObjectResult
+} from "../../deps.ts";
 import { Crud } from "./Crud.ts";
 import { CrudOptionsType, CrudParamsType, LogRecordsType, TaskTypes } from "./types.ts";
 import { isEmptyObject } from "./validate.ts";
@@ -128,23 +130,23 @@ class DeleteRecord extends Crud {
                     },
                 })
             }
-            const res = await this.appDb.query(deleteQueryObject.deleteQuery, deleteQueryObject.fieldValues)
+            const res = await this.appDb.queryObject(deleteQueryObject.deleteQuery, deleteQueryObject.fieldValues) as QueryObjectResult;
             // trx ends
             // delete cache
             const cacheParams: QueryHashCacheParamsType = {
                 key: this.cacheKey,
                 hash: this.table,
                 by: "hash",
-            }
+            };
             deleteHashCache(cacheParams);
             // check the audit-log settings - to perform audit-log
             let logRes = {code: "noLog", message: "noLog", value: {}} as ResponseMessage;
             if (this.logDelete || this.logCrud) {
-                const logRecs: LogRecordsType = {logRecords: this.currentRecs}
+                const logRecs: LogRecordsType = {logRecords: this.currentRecs};
                 const logParams: AuditLogOptionsType = {
                     tableName : this.table,
                     logRecords: logRecs,
-                }
+                };
                 logRes = await this.transLog.deleteLog(this.userId, logParams);
             }
             return getResMessage("success", {
@@ -183,25 +185,25 @@ class DeleteRecord extends Crud {
                         deleteQuery: deleteQueryObject.deleteQuery,
                         fieldValues: deleteQueryObject.fieldValues,
                     },
-                })
+                });
             }
-            const res = await this.appDb.query(deleteQueryObject.deleteQuery, deleteQueryObject.fieldValues)
+            const res = await this.appDb.queryObject(deleteQueryObject.deleteQuery, deleteQueryObject.fieldValues) as QueryObjectResult;
             // trx ends
             // delete cache
             const cacheParams: QueryHashCacheParamsType = {
                 key: this.cacheKey,
                 hash: this.table,
                 by: "hash",
-            }
+            };
             deleteHashCache(cacheParams);
             // check the audit-log settings - to perform audit-log
             let logRes = {code: "noLog", message: "noLog", value: {}} as ResponseMessage;
             if (this.logDelete || this.logCrud) {
-                const logRecs: LogRecordsType = {logRecords: this.currentRecs}
+                const logRecs: LogRecordsType = {logRecords: this.currentRecs};
                 const logParams: AuditLogOptionsType = {
                     tableName : this.table,
                     logRecords: logRecs,
-                }
+                };
                 logRes = await this.transLog.deleteLog(this.userId, logParams);
             }
             return getResMessage("success", {
@@ -231,7 +233,7 @@ class DeleteRecord extends Crud {
         try {
             if (this.queryParams && !isEmptyObject(this.queryParams)) {
                 // trx starts
-                const {deleteQueryObject, ok, message} = computeDeleteQueryByParam(this.table, this.queryParams)
+                const {deleteQueryObject, ok, message} = computeDeleteQueryByParam(this.table, this.queryParams);
                 if (!ok) {
                     return getResMessage("removeError", {
                         message: message,
@@ -241,16 +243,16 @@ class DeleteRecord extends Crud {
                             deleteQueryObject: deleteQueryObject,
                             fieldValues      : deleteQueryObject.fieldValues,
                         },
-                    })
+                    });
                 }
-                const res = await this.appDb.query(deleteQueryObject.deleteQuery, deleteQueryObject.fieldValues)
+                const res = await this.appDb.queryObject(deleteQueryObject.deleteQuery, deleteQueryObject.fieldValues) as QueryObjectResult;
                 // trx ends
                 //delete cache
                 const cacheParams: QueryHashCacheParamsType = {
                     key: this.cacheKey,
                     hash: this.table,
                     by: "hash",
-                }
+                };
                 deleteHashCache(cacheParams);
                 // check the audit-log settings - to perform audit-log
                 let logRes = {code: "noLog", message: "noLog", value: {}} as ResponseMessage;
@@ -259,7 +261,7 @@ class DeleteRecord extends Crud {
                     const logParams: AuditLogOptionsType = {
                         tableName : this.table,
                         logRecords: logRecs,
-                    }
+                    };
                     logRes = await this.transLog.deleteLog(this.userId, logParams);
                 }
                 return getResMessage("success", {

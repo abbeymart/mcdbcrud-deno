@@ -179,19 +179,6 @@ export class Crud {
         }
     }
 
-    // checkDbClient checks / validates mongo-client connection (for crud-transactional tasks)
-    checkDbClient(dbc: PoolClient): ResponseMessage {
-        if (dbc) {
-            return getResMessage("success", {
-                message: "valid database-server client connection",
-            });
-        } else {
-            return getResMessage("validateError", {
-                message: "valid database-server client connection is required",
-            });
-        }
-    }
-
     // implement toString method
     protected toString = (): string => `CRUD Instance Information: ${this}`
 
@@ -263,11 +250,11 @@ export class Crud {
             // record-fields
             const recFields = recRes.columns || []
             // convert record-rows to array-of-records(objects)
-            if (recFields.length) {
+            if (recFields.length > 0) {
                 for (const row of recRes.rows) {
                     const record: ActionParamType = {}
                     for (const recField of recFields) {
-                        record[toCamelCase(recField)] = (row as ObjectType)[recField]
+                        record[toCamelCase(recField)] = row[recField]
                     }
                     records.push(record)
                 }
@@ -275,7 +262,6 @@ export class Crud {
             return records
         } catch (e) {
             throw e
-            // return []
         }
     }
 
@@ -431,9 +417,9 @@ export class Crud {
             }
             recIds2 += ")"
             // where-query
-            const whereQuery = ` WHERE role_id IN ${recIds} AND service_id IN ${recIds2} AND is_active = $1`
-            const values = [true]
-            const res = await this.accessDb.queryObject(queryText + whereQuery, values) as QueryObjectResult
+            const whereQuery = ` WHERE role_id IN ${recIds} AND service_id IN ${recIds2} AND is_active = $1`;
+            const values = [true];
+            const res = await this.accessDb.queryObject(queryText + whereQuery, values) as QueryObjectResult;
 
             if (res.rows.length > 0) {
                 for (const rec of res.rows) {
@@ -805,7 +791,7 @@ export class Crud {
                 roleIds : userRes.rows[0].role_ids as Array<string>,
                 isActive: userRes.rows[0].is_active as boolean,
                 isAdmin : userRes.rows[0].is_admin as boolean || false,
-                profile : userRes.rows[0].profile as unknown as Record<string, unknown>,
+                profile : userRes.rows[0].profile as unknown as ObjectType,
             }
 
             return getResMessage("success", {

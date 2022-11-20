@@ -1,5 +1,5 @@
 import { AuditLog } from "../auditlog/index.ts";
-import { Pool, PoolClient, ResponseMessage } from "../../deps.ts";
+import { PoolClient, ResponseMessage } from "../../deps.ts";
 
 export type ValueType =
     Record<string, unknown>
@@ -11,7 +11,9 @@ export type ValueType =
     | Date
     | Array<Date>
     | boolean
-    | Array<boolean>;
+    | Array<boolean>
+    | {[key: string]: ValueType;}
+    | unknown;
 
 export type KeyType = string | Record<string, unknown> | number
 
@@ -277,7 +279,7 @@ export interface AppParamsType {
 }
 
 export interface CrudParamType {
-    appDb: Pool;
+    appDb: PoolClient;
     table: string;
     token?: string;
     userInfo?: UserInfoType;
@@ -298,8 +300,8 @@ export interface CrudParamType {
     childTables?: Array<string>;
     recursiveDelete?: boolean;
     checkAccess?: boolean;
-    accessDb: Pool;
-    auditDb: Pool;
+    accessDb: PoolClient;
+    auditDb: PoolClient;
     auditTable?: string;
     serviceTable?: string;
     userTable?: string;
@@ -318,9 +320,9 @@ export interface CrudParamType {
     unAuthorizedMessage?: string;
     recExistMessage?: string;
     isAdmin?: boolean;
-    createItems?: Array<ObjectType>;
-    updateItems?: Array<ObjectType>;
-    currentRecs?: Array<ObjectType>;
+    createItems?: ActionParamsType;
+    updateItems?: ActionParamsType;
+    currentRecs?: ActionParamsType;
     roleServices?: Array<RoleServiceResponseType>;
     subItems: Array<boolean>;
     cacheExpire?: number;

@@ -8,7 +8,9 @@
 import { getHashCache, HashCacheParamsType, QueryHashCacheParamsType, setHashCache } from "../../deps.ts";
 import { getResMessage, ResponseMessage } from "../../deps.ts";
 import { Crud } from "./Crud.ts";
-import { CheckAccessType, CrudOptionsType, CrudParamsType, GetResultType, LogRecordsType, TaskTypes } from "./types.ts";
+import {
+    CheckAccessType, CrudOptionsType, CrudParamsType, GetResultType, LogRecordsType, ObjectType, TaskTypes
+} from "./types.ts";
 import { isEmptyObject } from "./validate.ts";
 import { AuditLogOptionsType } from "../auditlog/index.ts";
 
@@ -77,7 +79,9 @@ class GetRecord extends Crud {
                 }
                 const cacheRes = await getHashCache(cacheParams);
                 if (cacheRes && cacheRes.value) {
-                    console.log("cache-items-before-query: ", cacheRes.value.records[0]);
+                    const cacheValue = cacheRes.value as unknown as GetResultType  // GetResultType
+                    const valueRecords = cacheValue["records"] as Array<ObjectType>
+                    console.log("cache-items-before-query: ", valueRecords[0]);
                     return getResMessage("success", {
                         value  : cacheRes.value,
                         message: "from cache",
@@ -100,22 +104,23 @@ class GetRecord extends Crud {
                 const res = await this.getCurrentRecords("id")
                 if (res.code === "success") {
                     // save copy in the cache
+                    const resValue = res.value as unknown as GetResultType
                     const resultValue: GetResultType = {
-                        records: res.value.records,
-                        stats  : res.value.stats,
+                        records: resValue.records,
+                        stats  : resValue.stats,
                         logRes,
                     }
                     if (this.cacheGetResult) {
                         const cacheParams: HashCacheParamsType = {
                             key   : this.cacheKey,
                             hash  : this.table,
-                            value : resultValue,
+                            value : resultValue as unknown as ObjectType,
                             expire: this.cacheExpire,
                         }
                         setHashCache(cacheParams);
                     }
                     return getResMessage("success", {
-                        value: resultValue,
+                        value: resultValue as unknown as ObjectType,
                     });
                 }
                 return getResMessage(res.code, {
