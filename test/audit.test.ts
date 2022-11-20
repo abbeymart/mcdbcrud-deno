@@ -1,6 +1,6 @@
-import { assertEquals, mcTest, postTestResult } from "@mconnect/mctest";
-import { MyDb } from "./config";
-import { AuditLogTypes, LogRecordsType, newAuditLog, newDbPg } from "../src";
+import { assertEquals, mcTest, postTestResult } from "../test_deps.ts";
+import { MyDb } from "../../config/dbConfig.ts";
+import { AuditLogTypes, LogRecordsType, newAuditLog, newDbPg } from "../src/index.ts";
 
 //
 const tableName = "services"
@@ -17,17 +17,17 @@ const newRecs: LogRecordsType = {
 }
 const readP: LogRecordsType = {logRecords: {keywords: ["lagos", "yoruba", "ghana", "accra"]}};
 
-let myDb = MyDb
+const myDb = MyDb
 myDb.options = {}
 
 const dbc = newDbPg(myDb, myDb.options);
 
-// expected db-connection result
-const mcLogResult = {auditDb: dbc.pgPool(), auditTable: "audits"};
-// audit-log instance
-const mcLog = newAuditLog(dbc.pgPool(), "audits");
-
 (async () => {
+    const dbClient = await dbc.pgPool().connect()
+    // expected db-connection result
+    const mcLogResult = {auditDb: dbClient, auditTable: "audits"};
+    // audit-log instance
+    const mcLog = newAuditLog(dbClient, "audits");
     await mcTest({
         name    : 'should connect to the DB and return an instance object',
         testFunc: () => {
