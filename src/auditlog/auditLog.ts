@@ -6,7 +6,7 @@
  */
 
 // Import required module/function
-import { getResMessage, ResponseMessage, Pool, PoolClient } from "../../deps.ts";
+import { getResMessage, ResponseMessage, PoolClient, Client } from "../../deps.ts";
 import { checkDb } from "../dbc/index.ts";
 import { isEmptyObject, LogRecordsType, ObjectType, ValueType } from "../crud/index.ts";
 
@@ -32,10 +32,10 @@ export enum AuditLogTypes {
 }
 
 class AuditLog {
-    private readonly dbHandle: PoolClient;
+    private readonly dbHandle: PoolClient | Client;
     private readonly auditTable: string;
 
-    constructor(auditDb: PoolClient, auditTable = "audits") {
+    constructor(auditDb: PoolClient | Client, auditTable = "audits") {
         this.dbHandle = auditDb;
         this.auditTable = auditTable;
     }
@@ -184,7 +184,8 @@ class AuditLog {
             let values: Array<ValueType | LogRecordsType>
             if (userId || userId !== "") {
                 queryText = `INSERT INTO ${this.auditTable}(table_name, log_records, log_type, log_by, log_at ) VALUES($1, $2, $3, $4, $5);`
-                values = [logParams.tableName, logParams.logRecords as LogRecordsType, AuditLogTypes.READ, userId, new Date()]
+                values = [logParams.tableName, logParams.logRecords as LogRecordsType, AuditLogTypes.READ, userId,
+                    new Date()]
             } else {
                 queryText = `INSERT INTO ${this.auditTable}(table_name, log_records, log_type, log_at ) VALUES($1, $2, $3, $4);`
                 values = [logParams.tableName, logParams.logRecords as LogRecordsType, AuditLogTypes.READ, new Date()]
@@ -385,7 +386,7 @@ class AuditLog {
 
         switch (logType) {
             case "create":
-            case AuditLogTypes.CREATE:
+            case AuditLogTypes.CREATE: {
                 // validate params/values
                 if (!tableName || tableName === "") {
                     errorMessage = errorMessage ? errorMessage + " | Table or Collection name is required." :
@@ -410,8 +411,9 @@ class AuditLog {
                     values: [tableName, logRecords, AuditLogTypes.CREATE, userId, new Date()],
                 }
                 break;
+            }
             case "update":
-            case AuditLogTypes.UPDATE:
+            case AuditLogTypes.UPDATE: {
                 // validate params/values
                 if (!tableName || tableName === "") {
                     errorMessage = errorMessage ? errorMessage + " | Table or Collection name is required." :
@@ -439,10 +441,11 @@ class AuditLog {
                     values: [tableName, logRecords, newLogRecords, AuditLogTypes.UPDATE, userId, new Date()],
                 }
                 break;
+            }
             case "remove":
             case "delete":
             case AuditLogTypes.DELETE:
-            case AuditLogTypes.REMOVE:
+            case AuditLogTypes.REMOVE: {
                 // Check/validate the attributes / parameters
                 if (!tableName || tableName === "") {
                     errorMessage = errorMessage ? errorMessage + " | Table or Collection name is required." :
@@ -466,9 +469,10 @@ class AuditLog {
                     values: [tableName, logRecords, AuditLogTypes.DELETE, userId, new Date()],
                 }
                 break;
+            }
             case "read":
             case AuditLogTypes.GET:
-            case AuditLogTypes.READ:
+            case AuditLogTypes.READ: {
                 // validate params/values
                 if (!tableName || tableName === "") {
                     errorMessage = errorMessage ? errorMessage + " | Table or Collection name is required." :
@@ -499,8 +503,9 @@ class AuditLog {
                     values: valuesRead,
                 }
                 break;
+            }
             case "login":
-            case AuditLogTypes.LOGIN:
+            case AuditLogTypes.LOGIN: {
                 // validate params/values
                 if (!logRecords || isEmptyObject(logRecords as ObjectType)) {
                     errorMessage = errorMessage + " | Login information is required."
@@ -525,6 +530,7 @@ class AuditLog {
                     values: valuesLogin,
                 }
                 break;
+            }
             case "logout":
             case AuditLogTypes.LOGOUT:
                 // validate params/values
