@@ -5,7 +5,7 @@
  * @Description: mongodb api index
  */
 
-export * from "./utils";
-export * from "./dbc";
-export * from "./auditlog";
-export * from "./crud";
+export * from "./utils.ts";
+export * from "./dbc/index.ts";
+export * from "./auditlog/index.ts";
+export * from "./crud/index.ts";

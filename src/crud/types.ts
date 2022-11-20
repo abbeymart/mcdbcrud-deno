@@ -1,18 +1,19 @@
-import {AuditLog} from "../auditlog/index.ts";
-import {ResponseMessage} from "@mconnect/mcresponse";
-import {Pool} from "pg";
+import { AuditLog } from "../auditlog/index.ts";
+import { Pool, ResponseMessage } from "../../deps.ts";
 
-type ValueType =
+export type ValueType =
     Record<string, unknown>
     | Array<Record<string, unknown>>
     | string
     | number
     | Array<string>
     | Array<number>
+    | Date
+    | Array<Date>
     | boolean
     | Array<boolean>;
 
-type KeyType = string | Record<string, unknown> | number
+export type KeyType = string | Record<string, unknown> | number
 
 export interface ObjectType {
     [key: string]: ValueType;

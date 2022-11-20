@@ -1,4 +1,4 @@
-import { Client, Pool } from "pg";
+import { Client, Pool } from "../../deps.ts";
 
 export interface DbSecureType {
     secureAccess?: boolean;

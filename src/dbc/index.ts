@@ -5,6 +5,6 @@
  * @Description: mc: db-connection module
  */
 
-export * from "./checkDb";
-export * from "./types";
-export * from "./pgConnect"
+export * from "./types.ts";
+export * from "./checkDb.ts";
+export * from "./pgConnect.ts"

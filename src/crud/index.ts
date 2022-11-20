@@ -4,15 +4,15 @@
  * @Description: @mconnect/crud-mongo, mongoDB CRUD operations
  */
 
-export * from "./Crud"
-export * from "./AuthCrud";
-export * from "./validate";
-export * from "./ValidateCrudParam";
-export * from "./types";
-export * from "./SaveRecord";
-export * from "./GetRecord";
-export * from "./GetRecordStream";
-export * from "./DeleteRecord";
-export * from "./LoadRecord";
-export * from "./utils";
-export * from "./helpers";
+export * from "./Crud.ts"
+export * from "./AuthCrud.ts";
+export * from "./validate.ts";
+export * from "./ValidateCrudParam.ts";
+export * from "./types.ts";
+export * from "./SaveRecord.ts";
+export * from "./GetRecord.ts";
+export * from "./GetRecordStream.ts";
+export * from "./DeleteRecord.ts";
+export * from "./LoadRecord.ts";
+export * from "./utils.ts";
+export * from "./helpers/index.ts";

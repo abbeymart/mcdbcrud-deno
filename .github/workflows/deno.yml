@@ -1,0 +1,35 @@
+name: mConnect Simple & Hash Cache Module
+
+on: [ push, pull_request ]
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        deno: [ 1.27.2, 1.28.0, 1.28.1 ]
+    name: Test with Deno ${{ matrix.deno }}
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Setup Deno
+        uses: denolib/setup-deno@master
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: Print deno version
+        run: deno --version
+
+      - name: Format code using Deno format
+        run: deno fmt **/*.ts
+
+      - name: Check format
+        run: deno fmt --check **/*.ts
+
+      - name: Build Deno Module
+        run: deno run --reload mod.ts
+
+      - name: Run tests
+        run: deno run test.ts
