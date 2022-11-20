@@ -40,7 +40,6 @@ class DeleteRecord extends Crud {
         if (accessDbCheck.code !== "success") {
             return accessDbCheck;
         }
-
         // delete / remove item(s) by recordId(s)
         if (this.recordIds && this.recordIds.length > 0) {
             try {
@@ -73,7 +72,6 @@ class DeleteRecord extends Crud {
                 });
             }
         }
-
         // delete / remove item(s) by queryParams
         if (this.queryParams && !isEmptyObject(this.queryParams)) {
             try {
@@ -114,10 +112,7 @@ class DeleteRecord extends Crud {
     }
 
     async removeRecordById(): Promise<ResponseMessage> {
-        // create a transaction session
-        // const client = await this.appDb.connect()
         try {
-            // trx starts
             const {deleteQueryObject, ok, message} = computeDeleteQueryById(this.table, this.recordIds[0])
             if (!ok) {
                 return getResMessage("removeError", {
@@ -131,7 +126,6 @@ class DeleteRecord extends Crud {
                 })
             }
             const res = await this.appDb.queryObject(deleteQueryObject.deleteQuery, deleteQueryObject.fieldValues) as QueryObjectResult;
-            // trx ends
             // delete cache
             const cacheParams: QueryHashCacheParamsType = {
                 key: this.cacheKey,
@@ -157,7 +151,6 @@ class DeleteRecord extends Crud {
                 }
             });
         } catch (e) {
-            // await client.query("ROLLBACK")
             return getResMessage("removeError", {
                 message: `Error removing/deleting record(s): ${e.message ? e.message : ""}`,
                 value  : {
@@ -165,16 +158,11 @@ class DeleteRecord extends Crud {
                     recordIds  : this.recordIds,
                 },
             });
-        } finally {
-            // client?.release();
         }
     }
 
     async removeRecordByIds(): Promise<ResponseMessage> {
-        // create a transaction session
-        // const client = await this.appDb.connect()
         try {
-            // trx starts
             const {deleteQueryObject, ok, message} = computeDeleteQueryByIds(this.table, this.recordIds)
             if (!ok) {
                 return getResMessage("removeError", {
@@ -188,7 +176,6 @@ class DeleteRecord extends Crud {
                 });
             }
             const res = await this.appDb.queryObject(deleteQueryObject.deleteQuery, deleteQueryObject.fieldValues) as QueryObjectResult;
-            // trx ends
             // delete cache
             const cacheParams: QueryHashCacheParamsType = {
                 key: this.cacheKey,
@@ -214,7 +201,6 @@ class DeleteRecord extends Crud {
                 }
             });
         } catch (e) {
-            // await client.query("ROLLBACK")
             return getResMessage("removeError", {
                 message: `Error removing/deleting record(s): ${e.message ? e.message : ""}`,
                 value  : {
@@ -222,17 +208,12 @@ class DeleteRecord extends Crud {
                     recordIds  : this.recordIds,
                 },
             });
-        } finally {
-            // client?.release();
         }
     }
 
     async removeRecordByParams(): Promise<ResponseMessage> {
-        // create a transaction session
-        // const client = await this.appDb.connect()
         try {
             if (this.queryParams && !isEmptyObject(this.queryParams)) {
-                // trx starts
                 const {deleteQueryObject, ok, message} = computeDeleteQueryByParam(this.table, this.queryParams);
                 if (!ok) {
                     return getResMessage("removeError", {
@@ -246,7 +227,6 @@ class DeleteRecord extends Crud {
                     });
                 }
                 const res = await this.appDb.queryObject(deleteQueryObject.deleteQuery, deleteQueryObject.fieldValues) as QueryObjectResult;
-                // trx ends
                 //delete cache
                 const cacheParams: QueryHashCacheParamsType = {
                     key: this.cacheKey,
@@ -281,7 +261,6 @@ class DeleteRecord extends Crud {
                 });
             }
         } catch (e) {
-            // await client.query("ROLLBACK")
             return getResMessage("removeError", {
                 message: `Error removing/deleting record(s): ${e.message ? e.message : ""}`,
                 value  : {
@@ -289,8 +268,6 @@ class DeleteRecord extends Crud {
                     recordIds  : this.recordIds,
                 },
             });
-        } finally {
-            // client?.release();
         }
     }
 }

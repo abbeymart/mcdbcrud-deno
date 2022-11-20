@@ -6,7 +6,9 @@
  */
 
 // Import required module/function(s)
-import { getResMessage, ResponseMessage, deleteHashCache, QueryHashCacheParamsType} from "../../deps.ts";
+import {
+    getResMessage, ResponseMessage, deleteHashCache, QueryHashCacheParamsType, QueryObjectResult
+} from "../../deps.ts";
 import { Crud } from "./Crud.ts";
 import {
     ActionParamsType,
@@ -317,53 +319,56 @@ class SaveRecord extends Crud {
                 message: "Unable to create new record(s), due to incomplete/incorrect input-parameters. ",
             });
         }
-        // TODO: create a transaction session
-        const client = await this.appDb.connect()
+        // create a transaction session
+        const transaction = this.appDb.createTransaction("mc-transaction-create", {
+            isolation_level: "serializable",
+        });
         try {
             // insert/create multiple records and audit-log
-            let recordsCount = 0
-            const recordIds: Array<string> = []
-            const {createQueryObject, ok, message} = computeCreateQuery(this.table, this.createItems)
+            let recordsCount = 0;
+            const recordIds: Array<string> = [];
+            const {createQueryObject, ok, message} = computeCreateQuery(this.table, this.createItems);
             if (!ok) {
+                await transaction.rollback();
                 return getResMessage("saveError", {
                     message: message,
                     value  : {
                         createQuery : createQueryObject.createQuery,
                         fieldValues1: [...createQueryObject.fieldValues[0]],
-                    }
-                })
+                    },
+                });
             }
             // trx starts | include returning id for each insert
-            await client.query("BEGIN")
+            await transaction.begin();
             for await (const values of createQueryObject.fieldValues) {
-                const res = await client.query(createQueryObject.createQuery, values)
-                if (res.rowCount > 0 && res.rows[0].id) {
-                    recordIds.push(res.rows[0].id)
+                const res = await transaction.queryObject(createQueryObject.createQuery, values) as QueryObjectResult;
+                if (res.rowCount && res.rowCount > 0 && res.rows[0].id) {
+                    recordIds.push(res.rows[0].id as string);
                 } else {
-                    throw new Error("Unable to create new record(s), database error.")
+                    throw new Error("Unable to create new record(s), database error.");
                 }
-                recordsCount += res.rowCount
+                recordsCount += res.rowCount;
             }
             // trx ends
             if (recordsCount > 0 && recordsCount === recordIds.length) {
                 // delete cache
                 const cacheParams: QueryHashCacheParamsType = {
-                    key: this.cacheKey,
+                    key : this.cacheKey,
                     hash: this.table,
-                    by: "hash",
-                }
+                    by  : "hash",
+                };
                 deleteHashCache(cacheParams);
                 // check the audit-log settings - to perform audit-log
                 let logRes = {code: "noLog", message: "noLog", value: {}} as ResponseMessage;
                 if (this.logCreate || this.logCrud) {
-                    const logRecs: LogRecordsType = {logRecords: this.createItems}
+                    const logRecs: LogRecordsType = {logRecords: this.createItems};
                     const logParams: AuditLogOptionsType = {
                         tableName : this.table,
                         logRecords: logRecs,
-                    }
+                    };
                     logRes = await this.transLog.createLog(this.userId, logParams);
                 }
-                await client.query("COMMIT")
+                await transaction.commit()
                 return getResMessage("success", {
                     message: "Record(s) created successfully.",
                     value  : {
@@ -373,15 +378,13 @@ class SaveRecord extends Crud {
                     },
                 });
             } else {
-                throw new Error("Unable to create new record(s), database error.")
+                throw new Error("Unable to create new record(s), database error.");
             }
         } catch (e) {
-            await client.query("ROLLBACK")
+            await transaction.rollback()
             return getResMessage("insertError", {
                 message: `Error inserting/creating new record(s): ${e.message ? e.message : ""}`,
             });
-        } finally {
-            client?.release();
         }
     }
 
@@ -391,15 +394,17 @@ class SaveRecord extends Crud {
                 message: "Unable to update record(s), due to incomplete/incorrect input-parameters. ",
             });
         }
-        // updated record(s)
         // create a transaction session
-        const client = this.appDb
+        const transaction = this.appDb.createTransaction("mc-transaction-create", {
+            isolation_level: "serializable",
+        });
         try {
             // check/validate update/upsert command for multiple records
-            let recordsCount = 0
-            const recordIds: Array<string> = []
-            const {updateQueryObjects, ok, message} = computeUpdateQuery(this.table, this.updateItems)
+            let recordsCount = 0;
+            const recordIds: Array<string> = [];
+            const {updateQueryObjects, ok, message} = computeUpdateQuery(this.table, this.updateItems);
             if (!ok) {
+                await transaction.rollback();
                 return getResMessage("saveError", {
                     message: message,
                     value  : {
@@ -407,40 +412,40 @@ class SaveRecord extends Crud {
                         updateQuery1       : updateQueryObjects[0].updateQuery,
                         fieldValues1       : [...updateQueryObjects[0].fieldValues]
                     }
-                })
+                });
             }
             // trx starts | include returning id for each insert
-            await client.queryObject("BEGIN")
+            await transaction.begin();
             for await (const updateQueryObject of updateQueryObjects) {
-                const res = await client.query(updateQueryObject.updateQuery, updateQueryObject.fieldValues)
-                if (res.rowCount > 0 && res.rows[0].id) {
-                    recordIds.push(res.rows[0].id)
+                const res = await transaction.queryObject(updateQueryObject.updateQuery, updateQueryObject.fieldValues) as QueryObjectResult;
+                if (res.rowCount && res.rowCount > 0 && res.rows[0].id) {
+                    recordIds.push(res.rows[0].id as string);
                 } else {
-                    throw new Error("Unable to create new record(s), database error.")
+                    throw new Error("Unable to create new record(s), database error.");
                 }
-                recordsCount += res.rowCount
+                recordsCount += res.rowCount;
             }
             if (recordsCount > 0 && recordsCount === recordIds.length) {
                 // delete cache
                 const cacheParams: QueryHashCacheParamsType = {
-                    key: this.cacheKey,
+                    key : this.cacheKey,
                     hash: this.table,
-                    by: "hash",
-                }
+                    by  : "hash",
+                };
                 await deleteHashCache(cacheParams);
                 // check the audit-log settings - to perform audit-log
                 let logRes = {code: "noLog", message: "noLog", value: {}} as ResponseMessage;
                 if (this.logUpdate || this.logCrud) {
-                    const logRecs: LogRecordsType = {logRecords: this.currentRecs}
-                    const newLogRecs: LogRecordsType = {logRecords: this.updateItems}
+                    const logRecs: LogRecordsType = {logRecords: this.currentRecs};
+                    const newLogRecs: LogRecordsType = {logRecords: this.updateItems};
                     const logParams: AuditLogOptionsType = {
                         tableName    : this.table,
                         logRecords   : logRecs,
                         newLogRecords: newLogRecs,
-                    }
+                    };
                     logRes = await this.transLog.updateLog(this.userId, logParams);
                 }
-                await client.query("COMMIT")
+                await transaction.commit();
                 return getResMessage("success", {
                     message: "Record(s) updated successfully.",
                     value  : {
@@ -450,16 +455,14 @@ class SaveRecord extends Crud {
                     },
                 });
             } else {
-                throw new Error(`${recordIds.length} of ${this.updateItems.length} could be updated, but rolled-back. Please retry.`)
+                throw new Error(`${recordIds.length} of ${this.updateItems.length} could be updated, but rolled-back. Please retry.`);
             }
         } catch (e) {
-            await client.query("ROLLBACK")
+            await transaction.rollback();
             return getResMessage("updateError", {
                 message: `Error updating record(s): ${e.message ? e.message : ""}`,
                 value  : e,
             });
-        } finally {
-            client?.release();
         }
     }
 
@@ -469,93 +472,90 @@ class SaveRecord extends Crud {
                 message: "Unable to update record(s), due to incomplete/incorrect input-parameters. ",
             });
         }
-        // updated record(s)
         // create a transaction session
-        const client = await this.appDb.connect()
+        const transaction = this.appDb.createTransaction("mc-transaction-create", {
+            isolation_level: "serializable",
+        });
         try {
             // check/validate update/upsert command for multiple records
-            let recordsCount = 0
-            let recordIds: Array<string> = []
+            let recordsCount = 0;
+            let recordIds: Array<string> = [];
             // update one record
+            await transaction.begin();
             if (this.recordIds.length === 1) {
                 // destruct id /other attributes
                 const {id, ...otherParams} = this.actionParams[0];
-
-                const {updateQueryObject, ok, message} = computeUpdateQueryById(this.table, otherParams, id)
+                const {updateQueryObject, ok, message} = computeUpdateQueryById(this.table, otherParams, id as string);
                 if (!ok) {
+                    await transaction.rollback();
                     return getResMessage("saveError", {
                         message: message,
                         value  : {
                             updateQuery: updateQueryObject.updateQuery,
                             fieldValues: updateQueryObject.fieldValues,
                         }
-                    })
+                    });
                 }
-                // trx starts | include returning id for each update
-                await client.query('BEGIN')
-                const res = await client.query(updateQueryObject.updateQuery, updateQueryObject.fieldValues)
-                if (res.rowCount > 0 && res.rows[0].id) {
-                    recordIds.push(res.rows[0].id)
+                const res = await transaction.queryObject(updateQueryObject.updateQuery, updateQueryObject.fieldValues) as QueryObjectResult;
+                if (res.rowCount && res.rowCount > 0 && res.rows[0].id) {
+                    recordIds.push(res.rows[0].id as string);
                 } else {
-                    throw new Error("Unable to create new record(s), database error.")
+                    throw new Error("Unable to create new record(s), database error.");
                 }
-                recordsCount += res.rowCount
-                // trx ends
+                recordsCount += res.rowCount;
             }
             // update multiple records
             if (this.recordIds.length > 1) {
                 // destruct id /other attributes
-                const {id, ...otherParams} = this.actionParams[0];
+                const {_id, ...otherParams} = this.actionParams[0];
                 const {
                     updateQueryObject,
                     ok,
                     message
-                } = computeUpdateQueryByIds(this.table, otherParams, this.recordIds)
+                } = computeUpdateQueryByIds(this.table, otherParams, this.recordIds);
                 if (!ok) {
+                    await transaction.rollback();
                     return getResMessage("saveError", {
                         message: message,
                         value  : {
                             updateQuery: updateQueryObject.updateQuery,
                             fieldValues: updateQueryObject.fieldValues,
-                        }
-                    })
+                        },
+                    });
                 }
-                // trx starts
-                await client.query('BEGIN')
-                const res = await client.query(updateQueryObject.updateQuery, updateQueryObject.fieldValues)
-                if (res.rowCount > 0 && res.rows[0].id) {
+                const res = await transaction.queryObject(updateQueryObject.updateQuery, updateQueryObject.fieldValues) as QueryObjectResult;
+                if (res.rowCount && res.rowCount > 0 && res.rows[0].id) {
                     // recordIds.push(res.rows[0].id)
-                    recordIds = res.rows.map(row => row.id)
+                    recordIds = res.rows.map(row => row.id as string);
                 } else {
-                    throw new Error("Unable to create new record(s), database error.")
+                    throw new Error("Unable to create new record(s), database error.");
                 }
-                recordsCount += res.rowCount
+                recordsCount += res.rowCount;
                 // recordIds = this.recordIds
-                // trx ends
             }
             if (recordsCount > 0 && recordsCount === this.recordIds.length) {
                 // delete cache
                 const cacheParams: QueryHashCacheParamsType = {
-                    key: this.cacheKey,
+                    key : this.cacheKey,
                     hash: this.table,
-                    by: "hash",
-                }
+                    by  : "hash",
+                };
                 await deleteHashCache(cacheParams);
                 // check the audit-log settings - to perform audit-log
                 let logRes = {code: "noLog", message: "noLog", value: {}} as ResponseMessage;
                 if (this.logUpdate || this.logCrud) {
                     // include query-params for audit-log
-                    const logRecs: LogRecordsType = {logRecords: this.currentRecs}
-                    const newLogRecs: LogRecordsType = {logRecords: this.updateItems}
+                    const logRecs: LogRecordsType = {logRecords: this.currentRecs};
+                    const newLogRecs: LogRecordsType = {logRecords: this.updateItems};
                     const updateParams: LogRecordsType = {...newLogRecs, ...{recordIds: this.recordIds}};
                     const logParams: AuditLogOptionsType = {
                         tableName    : this.table,
                         logRecords   : logRecs,
                         newLogRecords: updateParams,
-                    }
+                    };
                     logRes = await this.transLog.updateLog(this.userId, logParams);
                 }
-                await client.query("COMMIT")
+                await transaction.commit();
                 return getResMessage("success", {
                     message: "Record(s) updated successfully.",
                     value  : {
@@ -565,26 +565,26 @@ class SaveRecord extends Crud {
                     },
                 });
             } else {
-                throw new Error(`${recordIds.length} of ${this.recordIds.length} could be updated, but rolled-back. Please retry.`)
+                throw new Error(`${recordIds.length} of ${this.recordIds.length} could be updated, but rolled-back. Please retry.`);
             }
         } catch (e) {
-            await client.query("ROLLBACK")
+            await transaction.rollback();
             return getResMessage("updateError", {
                 message: `Error updating record(s): ${e.message ? e.message : ""}`,
                 value  : e,
             });
-        } finally {
-            client?.release();
         }
     }
 
     async updateRecordByParams(): Promise<ResponseMessage> {
-        // updated record(s)
-        const client = await this.appDb.connect()
-        let recordsCount = 0
+        // create a transaction session
+        const transaction = this.appDb.createTransaction("mc-transaction-create", {
+            isolation_level: "serializable",
+        });
+        let recordsCount = 0;
         try {
             // destruct id /other attributes
-            const {id, ...otherParams} = this.actionParams[0];
+            const {_id, ...otherParams} = this.actionParams[0];
             // include item stamps: userId and date
             if (this.modelOptions.actorStamp) {
                 otherParams.updatedBy = this.userId;
@@ -596,31 +596,32 @@ class SaveRecord extends Crud {
                 updateQueryObject,
                 ok,
                 message
-            } = computeUpdateQueryByParam(this.table, otherParams, this.queryParams)
+            } = computeUpdateQueryByParam(this.table, otherParams, this.queryParams);
             if (!ok) {
+                await transaction.rollback();
                 return getResMessage("saveError", {
                     message: message,
                     value  : {
                         updateQuery: updateQueryObject.updateQuery,
                         fieldValues: updateQueryObject.fieldValues,
                     }
-                })
+                });
             }
             // trx starts
-            await client.query('BEGIN')
-            const res = await client.query(updateQueryObject.updateQuery, updateQueryObject.fieldValues)
-            if (res.rowCount < 1) {
-                throw new Error("Unable to create new record(s), database error.")
+            await transaction.begin();
+            const res = await transaction.queryObject(updateQueryObject.updateQuery, updateQueryObject.fieldValues) as QueryObjectResult;
+            if (!res.rowCount || res.rowCount < 1) {
+                throw new Error("Unable to create new record(s), database error.");
             }
-            recordsCount += res.rowCount
+            recordsCount += res.rowCount;
             // trx ends
             if (recordsCount > 0) {
                 // delete cache
                 const cacheParams: QueryHashCacheParamsType = {
-                    key: this.cacheKey,
+                    key : this.cacheKey,
                     hash: this.table,
-                    by: "hash",
-                }
+                    by  : "hash",
+                };
                 await deleteHashCache(cacheParams);
                 // check the audit-log settings - to perform audit-log
                 let logRes = {code: "noLog", message: "noLog", value: {}} as ResponseMessage;
@@ -636,7 +637,7 @@ class SaveRecord extends Crud {
                     }
                     logRes = await this.transLog.updateLog(this.userId, logParams);
                 }
-                await client.query("COMMIT")
+                await transaction.commit();
                 return getResMessage("success", {
                     message: "Record(s) updated successfully.",
                     value  : {
@@ -645,16 +646,14 @@ class SaveRecord extends Crud {
                     },
                 });
             } else {
-                throw new Error(`${recordsCount} of ${this.recordIds.length} could be updated, but rolled-back. Please retry.`)
+                throw new Error(`${recordsCount} of ${this.recordIds.length} could be updated, but rolled-back. Please retry.`);
             }
         } catch (e) {
-            await client.query("ROLLBACK")
+            await transaction.rollback();
             return getResMessage("updateError", {
                 message: `Error updating record(s): ${e.message ? e.message : ""}`,
                 value  : e,
             });
-        } finally {
-            client?.release();
         }
     }
 }
