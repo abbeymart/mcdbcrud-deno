@@ -6,7 +6,7 @@
 
 // Import required module(s)
 import { Crud } from "./Crud.ts";
-import { CrudOptionsType, CrudParamsType } from "./types.ts";
+import { CrudOptionsType, CrudParamsType, ValueType } from "./types.ts";
 import {
     computeSelectQueryAll,
     computeSelectQueryByIds,
@@ -21,7 +21,7 @@ export interface CursorResultType {
     client?: PoolClient;
     ok: boolean;
     message: string;
-    value?: any;
+    value?: ValueType;
 }
 
 class GetRecordStream extends Crud {
@@ -86,10 +86,9 @@ class GetRecordStream extends Crud {
                         }
                     }
                 }
-                const client = await this.appDb.connect()
+                // const client = this.appDb
                 return {
-                    cursor : client.query(new Cursor(selectQueryObject.selectQuery, selectQueryObject.fieldValues)),
-                    client : client,
+                    cursor : this.appDb.queryObject(new Cursor(selectQueryObject.selectQuery, selectQueryObject.fieldValues)),
                     ok     : true,
                     message: "success",
                 }
@@ -122,10 +121,8 @@ class GetRecordStream extends Crud {
                         }
                     }
                 }
-                const client = await this.appDb.connect()
                 return {
-                    cursor : client.query(new Cursor(selectQueryObject.selectQuery, selectQueryObject.fieldValues)),
-                    client : client,
+                    cursor : this.appDb.queryObject(new Cursor(selectQueryObject.selectQuery, selectQueryObject.fieldValues)),
                     ok     : true,
                     message: "success",
                 }
@@ -153,10 +150,8 @@ class GetRecordStream extends Crud {
                     }
                 }
             }
-            const client = await this.appDb.connect()
             return {
-                cursor : client.query(new Cursor(selectQueryObject.selectQuery, selectQueryObject.fieldValues)),
-                client : client,
+                cursor : this.appDb.queryObject(new Cursor(selectQueryObject.selectQuery, selectQueryObject.fieldValues)),
                 ok     : true,
                 message: "success",
             }

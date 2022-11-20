@@ -1,5 +1,6 @@
-import { ActionParamsType, ActionParamType, CrudParamsType, TaskTypes, isEmptyObject } from "..";
+import { ActionParamsType, ActionParamType, CrudParamsType, TaskTypes } from "./types.ts";
 import { getResMessage, ResponseMessage } from "../../deps.ts";
+import { isEmptyObject } from "./validate.ts";
 import sanitize from "sanitize-html";
 import { gunzipSync, gzipSync } from "zlib";
 
@@ -58,15 +59,15 @@ export const setContentBody = (fieldValue: string): string => {
 }
 
 export const getContentBody = (body: string): string => {
-    const gzippedBuffer = Buffer.from(body, 'base64');
+    const gzippedBuffer = Buffer(body, 'base64');
     const unzippedBuffer = gunzipSync(gzippedBuffer);
     return unzippedBuffer.toString();
 }
 
 export const excludeEmptyIdFields = (recs: Array<ActionParamType>): Array<ActionParamType> => {
-    let actParams: Array<ActionParamType> = []
+    const actParams: Array<ActionParamType> = []
     for (const rec of recs) {
-        let actParam: ActionParamType = {}
+        const actParam: ActionParamType = {}
         for (const [key, value] of Object.entries(rec)) {
             if ((key === "id" || key.endsWith("Id")) && (!value || value === "")) {
                 continue

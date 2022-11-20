@@ -5,7 +5,7 @@
  */
 
 // Import required module/function(s)
-import { getResMessage, getParamsMessage, ResponseMessage, Pool } from "../../deps.ts";
+import { getResMessage, getParamsMessage, ResponseMessage, PoolClient } from "../../deps.ts";
 import { validateLoadParams } from "./ValidateCrudParam.ts";
 import { checkDb } from "../dbc/index.ts";
 import { ActionParamsType, CrudOptionsType, CrudParamsType, UserInfoType } from "./types.ts";
@@ -13,7 +13,7 @@ import { isEmptyObject } from "./validate.ts";
 
 class LoadRecord {
     protected params: CrudParamsType;
-    protected appDb: Pool;
+    protected appDb: PoolClient;
     protected table: string;
     protected token: string;
     protected userInfo: UserInfoType;
@@ -70,7 +70,7 @@ class LoadRecord {
                 // TODO: clear the current table documents/records, for refresh
 
                 // TODO: refresh (insert/create) new multiple records
-                const res = await this.appDb.query("...", []);
+                const res = await this.appDb.queryObject("...", []);
                 if (res.rows.length > 0) {
                     return getResMessage('success', {
                         message: `${res.rows.length} of ${totalRecordCount} record(s) created successfully.`,
