@@ -1,5 +1,5 @@
-import { Pool, Client } from "pg";
-import { DbSecureType, DbConnectionOptionsType, DbConfigType } from "./types";
+import { Pool, Client } from "../../deps.ts";
+import { DbSecureType, DbConnectionOptionsType, DbConfigType } from "./types.ts";
 
 export class DbPg {
     private readonly host: string;
@@ -35,13 +35,13 @@ export class DbPg {
     pgPool() {
         const configPool = {
             ...this.options,
-            host    : this.host,
+            hostname: this.host,
             port    : this.port,
             database: this.database,
             user    : this.username,
             password: this.password,
         }
-        return new Pool(configPool)
+        return new Pool(configPool, this.poolSize)
     }
 
     pgClient() {
@@ -61,7 +61,7 @@ export class DbPg {
             const client = await this.pgPool().connect();
             try {
                 console.log(`PostgresDB connected: ${this.host}:${this.port}/${this.database}`);
-                const res = await client.query('SELECT NOW() as now');
+                const res = await client.queryArray('SELECT NOW() as now');
                 console.log('pgSQL-test-pgPoolClient-query-result: ', res.rows[0]);
             } finally {
                 if (client) await client.release();
@@ -78,7 +78,9 @@ export class DbPg {
         (async () => {
             try {
                 console.log(`PostgresDB connected: ${this.host}:${this.port}/${this.database}`);
-                const res = await this.pgPool().query('SELECT NOW() as now');
+                // TODO: review the pgPool query method
+                const dbClient = await this.pgPool().connect()
+                const res = await dbClient.queryArray('SELECT NOW() as now');
                 console.log('pgSQL-test-pgPool-query(1)-result: ', res.rows[0]);
             } finally {
                 console.log('pgSQL-test-pgPool-query(1) connection released');

@@ -1,7 +1,3 @@
-/**
- * Created by abbeymart on 2016-02-12.
- * Messages in en-US for mConnect functions/tasks
- */
 export const mcMessages = {
     loginError           : "Login audit error",
     logoutError          : "Logout audit error",

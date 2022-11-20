@@ -6,10 +6,9 @@
  */
 
 // Import required module/function
-import { getResMessage, ResponseMessage } from "@mconnect/mcresponse";
-import { checkDb } from "../dbc";
-import { Pool } from "pg";
-import { isEmptyObject, LogRecordsType, ObjectRefType } from "../crud";
+import { getResMessage, ResponseMessage, Pool } from "../../deps.ts";
+import { checkDb } from "../dbc/index.ts";
+import { isEmptyObject, LogRecordsType, ObjectType } from "../crud/index.ts";
 
 //types
 export interface AuditLogOptionsType {
@@ -60,7 +59,7 @@ class AuditLog {
             errorMessage = errorMessage ? errorMessage + " | Table or Collection name is required." :
                 "Table or Collection name is required.";
         }
-        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectRefType)) {
+        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectType)) {
             errorMessage = errorMessage ? errorMessage + " | Created record(s) information is required." :
                 "Created record(s) information is required.";
         }
@@ -114,11 +113,11 @@ class AuditLog {
             errorMessage = errorMessage ? errorMessage + " | Table or Collection name is required." :
                 "Table or Collection name is required.";
         }
-        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectRefType)) {
+        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectType)) {
             errorMessage = errorMessage ? errorMessage + " | Current record(s) information is required." :
                 "Current record(s) information is required.";
         }
-        if (!logParams.newLogRecords || isEmptyObject(logParams.newLogRecords as ObjectRefType)) {
+        if (!logParams.newLogRecords || isEmptyObject(logParams.newLogRecords as ObjectType)) {
             errorMessage = errorMessage ? errorMessage + " | Updated record(s) information is required." :
                 "Updated record(s) information is required.";
         }
@@ -168,7 +167,7 @@ class AuditLog {
             errorMessage = errorMessage ? errorMessage + " | Table or Collection name is required." :
                 "Table or Collection name is required.";
         }
-        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectRefType)) {
+        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectType)) {
             errorMessage = errorMessage ?
                 errorMessage + " | Search keywords or Read record(s) information is required." :
                 "Search keywords or Read record(s) information is required.";
@@ -229,7 +228,7 @@ class AuditLog {
             errorMessage = errorMessage ? errorMessage + " | Table or Collection name is required." :
                 "Table or Collection name is required.";
         }
-        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectRefType)) {
+        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectType)) {
             errorMessage = errorMessage ? errorMessage + " | Deleted record(s) information is required." :
                 "Deleted record(s) information is required.";
         }
@@ -275,7 +274,7 @@ class AuditLog {
         // validate params/values
         let errorMessage = "";
         const logTableName = logParams.tableName || tableName;
-        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectRefType)) {
+        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectType)) {
             errorMessage = errorMessage + " | Login information is required."
         }
         if (errorMessage || errorMessage !== "") {
@@ -330,7 +329,7 @@ class AuditLog {
         if (!userId || userId === "") {
             errorMessage = errorMessage + " | userId is required."
         }
-        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectRefType)) {
+        if (!logParams.logRecords || isEmptyObject(logParams.logRecords as ObjectType)) {
             errorMessage = errorMessage + " | Logout information is required."
         }
         if (errorMessage || errorMessage !== "") {
@@ -396,7 +395,7 @@ class AuditLog {
                     errorMessage = errorMessage ? errorMessage + " | userId is required." :
                         "userId is required.";
                 }
-                if (!logRecords || isEmptyObject(logRecords as ObjectRefType)) {
+                if (!logRecords || isEmptyObject(logRecords as ObjectType)) {
                     errorMessage = errorMessage ? errorMessage + " | Created record(s) information is required." :
                         "Created record(s) information is required.";
                 }
@@ -422,11 +421,11 @@ class AuditLog {
                     errorMessage = errorMessage ? errorMessage + " | userId is required." :
                         "userId is required.";
                 }
-                if (!logRecords || isEmptyObject(logRecords as ObjectRefType)) {
+                if (!logRecords || isEmptyObject(logRecords as ObjectType)) {
                     errorMessage = errorMessage ? errorMessage + " | Current record(s) information is required." :
                         "Current record(s) information is required.";
                 }
-                if (!newLogRecords || isEmptyObject(newLogRecords as ObjectRefType)) {
+                if (!newLogRecords || isEmptyObject(newLogRecords as ObjectType)) {
                     errorMessage = errorMessage ? errorMessage + " | Updated record(s) information is required." :
                         "Updated record(s) information is required.";
                 }
@@ -453,7 +452,7 @@ class AuditLog {
                     errorMessage = errorMessage ? errorMessage + " | userId is required." :
                         "userId is required.";
                 }
-                if (!logRecords || isEmptyObject(logRecords as ObjectRefType)) {
+                if (!logRecords || isEmptyObject(logRecords as ObjectType)) {
                     errorMessage = errorMessage ? errorMessage + " | Deleted record(s) information is required." :
                         "Deleted record(s) information is required.";
                 }
@@ -475,7 +474,7 @@ class AuditLog {
                     errorMessage = errorMessage ? errorMessage + " | Table or Collection name is required." :
                         "Table or Collection name is required.";
                 }
-                if (!logRecords || isEmptyObject(logRecords as ObjectRefType)) {
+                if (!logRecords || isEmptyObject(logRecords as ObjectType)) {
                     errorMessage = errorMessage ?
                         errorMessage + " | Search keywords or Read record(s) information is required." :
                         "Search keywords or Read record(s) information is required.";
@@ -503,7 +502,7 @@ class AuditLog {
             case "login":
             case AuditLogTypes.LOGIN:
                 // validate params/values
-                if (!logRecords || isEmptyObject(logRecords as ObjectRefType)) {
+                if (!logRecords || isEmptyObject(logRecords as ObjectType)) {
                     errorMessage = errorMessage + " | Login information is required."
                 }
                 if (errorMessage || errorMessage !== "") {
@@ -532,7 +531,7 @@ class AuditLog {
                 if (!userId || userId === "") {
                     errorMessage = errorMessage + " | userId is required."
                 }
-                if (!logRecords || isEmptyObject(logRecords as ObjectRefType)) {
+                if (!logRecords || isEmptyObject(logRecords as ObjectType)) {
                     errorMessage = errorMessage + " | Logout information is required."
                 }
                 if (errorMessage || errorMessage !== "") {

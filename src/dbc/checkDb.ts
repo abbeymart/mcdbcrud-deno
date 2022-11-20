@@ -5,9 +5,8 @@
  * @Description: check-db connection / handle
  */
 
-import { getResMessage, ResponseMessage } from "@mconnect/mcresponse";
-import { DbConnectionType } from "./types";
-import { PoolClient } from "pg";
+import { getResMessage, ResponseMessage, PoolClient } from "../../deps.ts";
+import { DbConnectionType } from "./types.ts";
 
 export function checkDb(db: DbConnectionType): ResponseMessage {
     if (db) {
