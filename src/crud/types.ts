@@ -1,5 +1,5 @@
 import { AuditLog } from "../auditlog/index.ts";
-import { Pool, ResponseMessage } from "../../deps.ts";
+import { Pool, PoolClient, ResponseMessage } from "../../deps.ts";
 
 export type ValueType =
     Record<string, unknown>
@@ -109,12 +109,12 @@ export interface BaseModelType {
 ///  UserProfile: writeable by user / account owner
 export interface UserProfileType extends BaseModelType {
     userId?: string;
-    firstName: string;
-    lastName: string;
-    middleName?: string;
+    firstname?: string;
+    lastname?: string;
+    middlename?: string;
     fullName?: string;
-    recoveryEmail: string;
-    phone: string;
+    recoveryEmail?: string;
+    phone?: string;
     emails?: Array<EmailAddressType>,
     roleId?: string | null;
     dob?: Date;
@@ -335,7 +335,7 @@ export interface ModelOptionsType {
 
 export interface CrudParamsType {
     modelRef: ActionParamType;
-    appDb: Pool;
+    appDb: PoolClient;
     table: string;
     userInfo?: UserInfoType;
     nullValues?: ActionParamType;
@@ -372,9 +372,9 @@ export interface CrudOptionsType {
     accessTable?: string;
     verifyTable?: string;
     userRoleTable?: string;
-    accessDb?: Pool;
-    auditDb?: Pool;
-    serviceDb?: Pool;
+    accessDb?: PoolClient;
+    auditDb?: PoolClient;
+    serviceDb?: PoolClient;
     maxQueryLimit?: number;
     logCrud?: boolean;
     logCreate?: boolean;

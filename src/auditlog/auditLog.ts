@@ -6,9 +6,9 @@
  */
 
 // Import required module/function
-import { getResMessage, ResponseMessage, Pool } from "../../deps.ts";
+import { getResMessage, ResponseMessage, Pool, PoolClient } from "../../deps.ts";
 import { checkDb } from "../dbc/index.ts";
-import { isEmptyObject, LogRecordsType, ObjectType } from "../crud/index.ts";
+import { isEmptyObject, LogRecordsType, ObjectType, ValueType } from "../crud/index.ts";
 
 //types
 export interface AuditLogOptionsType {
@@ -32,10 +32,10 @@ export enum AuditLogTypes {
 }
 
 class AuditLog {
-    private readonly dbHandle: Pool;
+    private readonly dbHandle: PoolClient;
     private readonly auditTable: string;
 
-    constructor(auditDb: Pool, auditTable = "audits") {
+    constructor(auditDb: PoolClient, auditTable = "audits") {
         this.dbHandle = auditDb;
         this.auditTable = auditTable;
     }
@@ -78,14 +78,14 @@ class AuditLog {
                 text  : queryText,
                 values: values,
             }
-            const res = await this.dbHandle.query(query)
-            if (res.rowCount > 0) {
+            const res = await this.dbHandle.queryArray(query)
+            if (res.rowCount && res.rowCount > 0) {
                 return getResMessage("success", {
-                    value: res,
+                    value: res as unknown as Record<string, unknown>,
                 });
             } else {
                 return getResMessage("insertError", {
-                    value  : res,
+                    value  : res as unknown as Record<string, unknown>,
                     message: "create-log-records-error",
                 });
             }
@@ -136,14 +136,14 @@ class AuditLog {
                 text  : queryText,
                 values: values,
             }
-            const res = await this.dbHandle.query(query)
-            if (res.rowCount > 0) {
+            const res = await this.dbHandle.queryArray(query)
+            if (res.rowCount && res.rowCount > 0) {
                 return getResMessage("success", {
-                    value: res,
+                    value: res as unknown as Record<string, unknown>,
                 });
             } else {
                 return getResMessage("insertError", {
-                    value  : res,
+                    value  : res as unknown as Record<string, unknown>,
                     message: "create-log-records-error",
                 });
             }
@@ -156,7 +156,7 @@ class AuditLog {
         }
     }
 
-    async readLog(logParams: AuditLogOptionsType, userId: string = ""): Promise<ResponseMessage> {
+    async readLog(logParams: AuditLogOptionsType, userId = ""): Promise<ResponseMessage> {
         const dbCheck = checkDb(this.dbHandle);
         if (!dbCheck) {
             return dbCheck;
@@ -181,26 +181,26 @@ class AuditLog {
         try {
             // insert audit record
             let queryText: string
-            let values: Array<any>
+            let values: Array<ValueType | LogRecordsType>
             if (userId || userId !== "") {
                 queryText = `INSERT INTO ${this.auditTable}(table_name, log_records, log_type, log_by, log_at ) VALUES($1, $2, $3, $4, $5);`
-                values = [logParams.tableName, logParams.logRecords, AuditLogTypes.READ, userId, new Date()]
+                values = [logParams.tableName, logParams.logRecords as LogRecordsType, AuditLogTypes.READ, userId, new Date()]
             } else {
                 queryText = `INSERT INTO ${this.auditTable}(table_name, log_records, log_type, log_at ) VALUES($1, $2, $3, $4);`
-                values = [logParams.tableName, logParams.logRecords, AuditLogTypes.READ, new Date()]
+                values = [logParams.tableName, logParams.logRecords as LogRecordsType, AuditLogTypes.READ, new Date()]
             }
             const query = {
                 text  : queryText,
                 values: values,
             }
-            const res = await this.dbHandle.query(query)
-            if (res.rowCount > 0) {
+            const res = await this.dbHandle.queryArray(query)
+            if (res.rowCount && res.rowCount > 0) {
                 return getResMessage("success", {
-                    value: res,
+                    value: res as unknown as Record<string, unknown>,
                 });
             } else {
                 return getResMessage("insertError", {
-                    value  : res,
+                    value  : res as unknown as Record<string, unknown>,
                     message: "create-log-records-error",
                 });
             }
@@ -246,14 +246,14 @@ class AuditLog {
                 text  : queryText,
                 values: values,
             }
-            const res = await this.dbHandle.query(query)
-            if (res.rowCount > 0) {
+            const res = await this.dbHandle.queryArray(query)
+            if (res.rowCount && res.rowCount > 0) {
                 return getResMessage("success", {
-                    value: res,
+                    value: res as unknown as Record<string, unknown>,
                 });
             } else {
                 return getResMessage("insertError", {
-                    value  : res,
+                    value  : res as unknown as Record<string, unknown>,
                     message: "create-log-records-error",
                 });
             }
@@ -266,7 +266,7 @@ class AuditLog {
         }
     }
 
-    async loginLog(logParams: AuditLogOptionsType, userId: string = "", tableName = "users"): Promise<ResponseMessage> {
+    async loginLog(logParams: AuditLogOptionsType, userId = "", tableName = "users"): Promise<ResponseMessage> {
         const dbCheck = checkDb(this.dbHandle);
         if (!dbCheck) {
             return dbCheck;
@@ -286,26 +286,26 @@ class AuditLog {
         try {
             // insert audit record
             let queryText: string
-            let values: Array<any>
+            let values: Array<ValueType | LogRecordsType>
             if (userId || userId !== "") {
                 queryText = `INSERT INTO ${this.auditTable}(table_name, log_records, log_type, log_by, log_at ) VALUES($1, $2, $3, $4, $5);`
-                values = [logTableName, logParams.logRecords, AuditLogTypes.LOGIN, userId, new Date()]
+                values = [logTableName, logParams.logRecords as LogRecordsType, AuditLogTypes.LOGIN, userId, new Date()]
             } else {
                 queryText = `INSERT INTO ${this.auditTable}(table_name, log_records, log_type, log_at ) VALUES($1, $2, $3, $4);`
-                values = [logTableName, logParams.logRecords, AuditLogTypes.LOGIN, new Date()]
+                values = [logTableName, logParams.logRecords as LogRecordsType, AuditLogTypes.LOGIN, new Date()]
             }
             const query = {
                 text  : queryText,
                 values: values,
             }
-            const res = await this.dbHandle.query(query)
-            if (res.rowCount > 0) {
+            const res = await this.dbHandle.queryArray(query)
+            if (res.rowCount && res.rowCount > 0) {
                 return getResMessage("success", {
-                    value: res,
+                    value: res as unknown as Record<string, unknown>,
                 });
             } else {
                 return getResMessage("insertError", {
-                    value  : res,
+                    value  : res as unknown as Record<string, unknown>,
                     message: "create-log-records-error",
                 });
             }
@@ -346,14 +346,14 @@ class AuditLog {
                 text  : queryText,
                 values: values,
             }
-            const res = await this.dbHandle.query(query)
-            if (res.rowCount > 0) {
+            const res = await this.dbHandle.queryArray(query)
+            if (res.rowCount && res.rowCount > 0) {
                 return getResMessage("success", {
-                    value: res,
+                    value: res as unknown as Record<string, unknown>,
                 });
             } else {
                 return getResMessage("insertError", {
-                    value  : res,
+                    value  : res as unknown as Record<string, unknown>,
                     message: "create-log-records-error",
                 });
             }
@@ -366,14 +366,14 @@ class AuditLog {
         }
     }
 
-    async auditLog(logType: string, logParams: AuditLogOptionsType, userId: string = "") {
+    async auditLog(logType: string, logParams: AuditLogOptionsType, userId = "") {
         const dbCheck = checkDb(this.dbHandle);
         if (!dbCheck) {
             return dbCheck;
         }
         // Check/validate the attributes / parameters by logTypes (create, update, delete, read, login, logout...)
         let errorMessage = "",
-            query: { text: string; values: Array<any> } = {text: "", values: []};
+            query: { text: string; values: Array<ValueType | LogRecordsType> } = {text: "", values: []};
 
         // set share variable-values
         logType = logType.toLowerCase();
@@ -486,7 +486,7 @@ class AuditLog {
                 }
 
                 let queryTextRead: string
-                let valuesRead: Array<any>
+                let valuesRead: Array<ValueType | LogRecordsType>
                 if (userId || userId !== "") {
                     queryTextRead = `INSERT INTO ${this.auditTable}(table_name, log_records, log_type, log_by, log_at ) VALUES($1, $2, $3, $4, $5);`
                     valuesRead = [tableName, logRecords, AuditLogTypes.READ, userId, new Date()]
@@ -512,7 +512,7 @@ class AuditLog {
                 }
                 tableName = tableName || "users"
                 let queryTextLogin: string
-                let valuesLogin: Array<any>
+                let valuesLogin: Array<ValueType | LogRecordsType>
                 if (userId || userId !== "") {
                     queryTextLogin = `INSERT INTO ${this.auditTable}(table_name, log_records, log_type, log_by, log_at ) VALUES($1, $2, $3, $4, $5);`
                     valuesLogin = [tableName, logRecords, AuditLogTypes.LOGIN, userId, new Date()]
@@ -552,14 +552,14 @@ class AuditLog {
         }
         // perform insert task - insert audit record
         try {
-            const res = await this.dbHandle.query(query)
-            if (res.rowCount > 0) {
+            const res = await this.dbHandle.queryArray(query)
+            if (res.rowCount && res.rowCount > 0) {
                 return getResMessage("success", {
-                    value: res,
+                    value: res as unknown as Record<string, unknown>,
                 });
             } else {
                 return getResMessage("insertError", {
-                    value  : res,
+                    value  : res as unknown as Record<string, unknown>,
                     message: "create-log-records-error",
                 });
             }
@@ -573,7 +573,7 @@ class AuditLog {
     }
 }
 
-function newAuditLog(auditDb: Pool, auditTable = "audits") {
+function newAuditLog(auditDb: PoolClient, auditTable = "audits") {
     return new AuditLog(auditDb, auditTable);
 }
 

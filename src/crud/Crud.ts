@@ -5,14 +5,14 @@
  */
 
 // Import required module/function(s)/types
-import { getResMessage, ResponseMessage } from "@mconnect/mcresponse";
+import { getResMessage, ResponseMessage, Pool, PoolClient, QueryObjectResult } from "../../deps.ts";
 import {
     ActionParamsType,
     ActionParamType,
     CheckAccessType,
     CrudOptionsType,
     CrudParamsType,
-    CrudQueryFieldType,
+    CrudQueryFieldType, ObjectType,
     OkResponse, OwnerRecordCountResultType,
     ProjectParamType,
     QueryParamsType,
@@ -24,21 +24,20 @@ import {
     TaskAccessType,
     TaskTypes,
     UserInfoType,
-} from "./types";
-import { AuditLog, newAuditLog } from "../auditlog";
-import { Pool, PoolClient, QueryResult } from "pg";
+} from "./types.ts";
+import { AuditLog, newAuditLog } from "../auditlog/index.ts";
 import {
     computeSelectQueryAll,
     computeSelectQueryById,
     computeSelectQueryByIds,
     computeSelectQueryByParams
-} from "./helpers";
-import { toCamelCase } from "./utils";
+} from "./helpers/index.ts";
+import { toCamelCase } from "./utils.ts";
 
 export class Crud {
     protected params: CrudParamsType;
     protected readonly modelRef: ActionParamType;
-    protected readonly appDb: Pool;
+    protected readonly appDb: PoolClient;
     protected readonly table: string;
     protected token: string;
     protected readonly userInfo: UserInfoType;
@@ -50,9 +49,9 @@ export class Crud {
     protected taskType: TaskTypes | string;
     protected skip: number;
     protected limit: number;
-    protected readonly accessDb: Pool;
-    protected readonly auditDb: Pool;
-    protected readonly serviceDb: Pool;
+    protected readonly accessDb: PoolClient;
+    protected readonly auditDb: PoolClient;
+    protected readonly serviceDb: PoolClient;
     protected readonly auditTable: string;
     protected readonly serviceTable: string;
     protected readonly userTable: string;
@@ -168,7 +167,7 @@ export class Crud {
     }
 
     // checkDb checks / validate appDb
-    checkDb(dbConnect: Pool): ResponseMessage {
+    checkDb(dbConnect: Pool | PoolClient): ResponseMessage {
         if (dbConnect) {
             return getResMessage("success", {
                 message: "valid database handler",
@@ -205,7 +204,7 @@ export class Crud {
             }
             // count owner-records
             const ownerScript = `SELECT COUNT(*) AS ownerrows FROM ${this.table} WHERE created_by = $1`
-            const ownerRowsRes = await this.appDb.query(ownerScript, [this.userInfo.userId])
+            const ownerRowsRes = await this.appDb.queryObject(ownerScript, [this.userInfo.userId]) as QueryObjectResult
             const ownerRows = Number(ownerRowsRes.rows[0].ownerrows)
             if (ownerRows < 1) {
                 return {
@@ -233,7 +232,7 @@ export class Crud {
         try {
             // totalRecordsCount from the table
             const countQuery = `SELECT COUNT(*) AS totalrows FROM ${this.table}`
-            const countRowsRes = await this.appDb.query(countQuery)
+            const countRowsRes = await this.appDb.queryObject(countQuery) as QueryObjectResult
             const totalRows = Number(countRowsRes.rows[0].totalrows)
             if (totalRows < 1) {
                 return {
@@ -258,18 +257,20 @@ export class Crud {
 
     // computeQueryRecords method computes and transform QueryResult and returns the result of ActionParamsType(Array<object>).
     // Converts the field-names to camelCase for json-format response.
-    computeQueryRecords(recRes: QueryResult): ActionParamsType {
-        let records: ActionParamsType = [];
+    computeQueryRecords(recRes: QueryObjectResult): ActionParamsType {
+        const records: ActionParamsType = [];
         try {
             // record-fields
-            const recFields = recRes.fields.map(field => field.name)
+            const recFields = recRes.columns || []
             // convert record-rows to array-of-records(objects)
-            for (const row of recRes.rows) {
-                let record: ActionParamType = {}
-                for (const recField of recFields) {
-                    record[toCamelCase(recField)] = row[recField]
+            if (recFields.length) {
+                for (const row of recRes.rows) {
+                    const record: ActionParamType = {}
+                    for (const recField of recFields) {
+                        record[toCamelCase(recField)] = (row as ObjectType)[recField]
+                    }
+                    records.push(record)
                 }
-                records.push(record)
             }
             return records
         } catch (e) {
@@ -295,7 +296,7 @@ export class Crud {
                 })
             }
             let selectQueryResult: SelectQueryResult
-            let recRes: QueryResult
+            let recRes: QueryObjectResult
 
             switch (by.toLowerCase()) {
                 case "id":
@@ -322,7 +323,7 @@ export class Crud {
                         })
                     }
                     // get records
-                    recRes = await this.appDb.query(selectQueryResult.selectQueryObject.selectQuery, selectQueryResult.selectQueryObject.fieldValues)
+                    recRes = await this.appDb.queryObject(selectQueryResult.selectQueryObject.selectQuery, selectQueryResult.selectQueryObject.fieldValues)
                     break;
                 case "queryparams":
                     // get records by query-params
@@ -341,7 +342,7 @@ export class Crud {
                         })
                     }
                     // query records
-                    recRes = await this.appDb.query(selectQueryResult.selectQueryObject.selectQuery, selectQueryResult.selectQueryObject.fieldValues)
+                    recRes = await this.appDb.queryObject(selectQueryResult.selectQueryObject.selectQuery, selectQueryResult.selectQueryObject.fieldValues)
                     break;
                 default:
                     // get all records
@@ -359,7 +360,7 @@ export class Crud {
                         })
                     }
                     // query records
-                    recRes = await this.appDb.query(selectQueryResult.selectQueryObject.selectQuery, selectQueryResult.selectQueryObject.fieldValues)
+                    recRes = await this.appDb.queryObject(selectQueryResult.selectQueryObject.selectQuery, selectQueryResult.selectQueryObject.fieldValues)
                     break;
             }
             // compute records
@@ -401,7 +402,7 @@ export class Crud {
     // getRoleServices method process and returns the permission to user / user-group/role for the specified service items
     async getRoleServices(roleIds: Array<string>, serviceIds: Array<string>): Promise<Array<RoleServiceResponseType>> {
         // serviceIds: for serviceCategory (record, table, function, package, solution...)
-        let roleServices: Array<RoleServiceResponseType> = [];
+        const roleServices: Array<RoleServiceResponseType> = [];
         try {
             // validate databases
             const validRoleServiceDb = await this.checkDb(this.accessDb);
@@ -432,31 +433,31 @@ export class Crud {
             // where-query
             const whereQuery = ` WHERE role_id IN ${recIds} AND service_id IN ${recIds2} AND is_active = $1`
             const values = [true]
-            const res = await this.accessDb.query(queryText + whereQuery, values)
+            const res = await this.accessDb.queryObject(queryText + whereQuery, values) as QueryObjectResult
 
             if (res.rows.length > 0) {
                 for (const rec of res.rows) {
                     roleServices.push({
-                        serviceId      : rec.service_id,
-                        roleId         : rec.role_id,
+                        serviceId      : rec.service_id as string,
+                        roleId         : rec.role_id as string,
                         roleIds        : roleIds,
-                        serviceCategory: rec.service_category,
-                        canRead        : rec.can_read,
-                        canCreate      : rec.can_create,
-                        canUpdate      : rec.can_update,
-                        canDelete      : rec.can_delete,
-                        canCrud        : rec.can_crud,
+                        serviceCategory: rec.service_category as string,
+                        canRead        : rec.can_read as boolean,
+                        canCreate      : rec.can_create as boolean,
+                        canUpdate      : rec.can_update as boolean,
+                        canDelete      : rec.can_delete as boolean,
+                        canCrud        : rec.can_crud as boolean,
                     });
                 }
             }
             return roleServices;
-        } catch (e) {
+        } catch (_e) {
             return [];
         }
     }
 
     // checkAccess validate if current CRUD task is permitted based on defined/assigned roles
-    async checkTaskAccess(userInfo: UserInfoType, recordIds: Array<string> = []): Promise<ResponseMessage> {
+    async checkTaskAccess(recordIds: Array<string> = []): Promise<ResponseMessage> {
         try {
             // validate databases
             const validAccessDb = await this.checkDb(this.accessDb);
@@ -473,7 +474,7 @@ export class Crud {
             if (accessRes.code !== "success") {
                 return accessRes;
             }
-            const userRec = accessRes.value as CheckAccessType;
+            const userRec = accessRes.value as unknown as CheckAccessType;
             // determine records ownership permission
             let ownerPermitted = false;
             const idLen = recordIds.length
@@ -492,7 +493,7 @@ export class Crud {
                     // where-query
                     const whereQuery = ` WHERE id IN ${recIds} AND created_by = $1`
                     const values = [userRec.userId]
-                    const res = await this.accessDb.query(queryText + whereQuery, values)
+                    const res = await this.accessDb.queryObject(queryText + whereQuery, values) as QueryObjectResult
                     // check if the current-user owned all the current-records (recordIds)
                     if (Number(res.rows[0].totalrows) === this.recordIds.length) {
                         ownerPermitted = true;
@@ -500,7 +501,7 @@ export class Crud {
                 } else {
                     const queryText = `SELECT COUNT(*) AS recordscount FROM ${this.table} WHERE created_by=$1`
                     const values = [userRec.userId]
-                    const res = await this.accessDb.query(queryText, values)
+                    const res = await this.accessDb.queryObject(queryText, values) as QueryObjectResult
                     if (Number(res.rows[0].recordscount) > 0 && this.taskType === TaskTypes.READ) {
                         ownerPermitted = true;
                     }
@@ -517,14 +518,14 @@ export class Crud {
             const queryText = `SELECT id, category FROM ${this.serviceTable}`
             const whereQuery = ` WHERE category IN ('table', 'Table', 'collection', 'Collection') AND name = $1`
             const values = [this.table]
-            const res = await this.accessDb.query(queryText + whereQuery, values)
+            const res = await this.accessDb.queryObject(queryText + whereQuery, values) as QueryObjectResult
 
             // if permitted, include tableId and recordIds in serviceIds
             let tableId = "";
-            let serviceIds = recordIds;
-            if (res && res.rows.length > 0 && (res.rows[0].category.toLowerCase() === "table" || "collection")) {
-                tableId = res.rows[0].id;
-                serviceIds.push(res.rows[0].id);
+            const serviceIds = recordIds;
+            if (res && res.rows.length > 0 && ((res.rows[0].category as string).toLowerCase() === "table" || "collection")) {
+                tableId = res.rows[0].id as string;
+                serviceIds.push(res.rows[0].id as string);
             }
 
             let roleServices: Array<RoleServiceResponseType> = [];
@@ -532,7 +533,7 @@ export class Crud {
                 roleServices = await this.getRoleServices(userRec.roleIds, serviceIds)
             }
 
-            let permittedRes: TaskAccessType = {
+            const permittedRes: TaskAccessType = {
                 userId        : userRec.userId,
                 roleId        : userRec.roleId,
                 roleIds       : userRec.roleIds,
@@ -543,16 +544,16 @@ export class Crud {
                 ownerPermitted: ownerPermitted,
             }
             if (permittedRes.isActive && (permittedRes.isAdmin || ownerPermitted)) {
-                return getResMessage("success", {value: permittedRes});
+                return getResMessage("success", {value: permittedRes as unknown as Record<string, unknown>});
             }
             const recLen = permittedRes.roleServices?.length || 0;
             if (permittedRes.isActive && recLen > 0 && recLen >= recordIds.length) {
-                return getResMessage("success", {value: permittedRes});
+                return getResMessage("success", {value: permittedRes as unknown as Record<string, unknown>});
             }
             return getResMessage("unAuthorized",
                 {
                     message: `Access permitted for ${recordIds.length} of ${recLen} service-items/records`,
-                    value  : permittedRes
+                    value  : permittedRes as unknown as Record<string, unknown>
                 }
             );
         } catch (e) {
@@ -586,12 +587,12 @@ export class Crud {
             recordIds = this.recordIds;
 
             // check role-based access
-            const accessRes = await this.checkTaskAccess(this.userInfo, recordIds);
+            const accessRes = await this.checkTaskAccess(recordIds);
             if (accessRes.code !== "success") {
                 return accessRes;
             }
             // capture roleServices value | get access info value
-            let accessInfo = accessRes.value as TaskAccessType;
+            const accessInfo = accessRes.value as unknown as TaskAccessType;
             // set records ownership permission
             ownerPermitted = accessInfo.ownerPermitted || false
             isAdmin = accessInfo.isAdmin;
@@ -727,7 +728,7 @@ export class Crud {
             }
         } catch (e) {
             const ok: OkResponse = {ok: false};
-            return getResMessage("unAuthorized", {value: ok, message: e.message});
+            return getResMessage("unAuthorized", {value: ok as unknown as Record<string, boolean>, message: e.message});
         }
     }
 
@@ -736,16 +737,16 @@ export class Crud {
     async taskPermissionByParams(taskType: TaskTypes | string): Promise<ResponseMessage> {
         try {
             // ids of records, from queryParams
-            let recordIds: Array<string> = [];          // reset recordIds instance value
+            const recordIds: Array<string> = [];          // reset recordIds instance value
             if (this.currentRecs.length < 1) {
                 const currentRecRes = await this.getCurrentRecords("queryParams");
                 if (currentRecRes.code !== "success") {
                     return getResMessage("notFound", {message: "missing records, required to process permission"});
                 }
-                this.currentRecs = currentRecRes.value.records;
+                this.currentRecs = (currentRecRes.value as ObjectType)["records"] as Array<ObjectType>;
             }
             for (const rec of this.currentRecs) {
-                recordIds.push(rec["id"]);
+                recordIds.push(rec["id"] as string);
             }
             this.recordIds = recordIds;
             return await this.taskPermissionById(taskType);
@@ -768,10 +769,10 @@ export class Crud {
                 return validAccessDb;
             }
             // check loginName, userId and token validity... from access table
-            const queryText = `SELECT expire FROM ${this.accessTable}`
-            const whereQuery = ` WHERE user_id=$1 AND login_name=$2 AND token=$3`
-            const values = [this.userInfo.userId, this.userInfo.loginName, this.userInfo.token]
-            const accessRes = await this.accessDb.query(queryText + whereQuery, values)
+            const queryText = `SELECT expire FROM ${this.accessTable}`;
+            const whereQuery = ` WHERE user_id=$1 AND login_name=$2 AND token=$3`;
+            const values = [this.userInfo.userId, this.userInfo.loginName, this.userInfo.token];
+            const accessRes = await this.accessDb.queryObject(queryText + whereQuery, values) as QueryObjectResult;
 
             // validate login status
             if (accessRes.rows.length > 0) {
@@ -790,7 +791,7 @@ export class Crud {
             const queryText2 = `SELECT id, role_ids, is_active, is_admin, profile FROM ${this.userTable}`
             const whereQuery2 = ` WHERE id=$1 AND is_active=$2 AND (email=$3 OR username=$4)`
             const values2 = [this.userInfo.userId, true, this.userInfo.loginName, this.userInfo.loginName]
-            const userRes = await this.accessDb.query(queryText2 + whereQuery2, values2)
+            const userRes = await this.accessDb.queryObject(queryText2 + whereQuery2, values2) as QueryObjectResult
 
             if (userRes.rows.length < 1) {
                 return getResMessage("notFound", {
@@ -799,17 +800,17 @@ export class Crud {
             }
 
             const checkAccessValue: CheckAccessType = {
-                userId  : userRes.rows[0].id,
-                roleId  : userRes.rows[0].profile.role_id,
-                roleIds : userRes.rows[0].role_ids,
-                isActive: userRes.rows[0].is_active,
-                isAdmin : userRes.rows[0].is_admin || false,
-                profile : userRes.rows[0].profile,
+                userId  : userRes.rows[0].id as string,
+                roleId  : (userRes.rows[0].profile as unknown as ObjectType).role_id as string,
+                roleIds : userRes.rows[0].role_ids as Array<string>,
+                isActive: userRes.rows[0].is_active as boolean,
+                isAdmin : userRes.rows[0].is_admin as boolean || false,
+                profile : userRes.rows[0].profile as unknown as Record<string, unknown>,
             }
 
             return getResMessage("success", {
                 message: "Access Permitted: ",
-                value  : checkAccessValue,
+                value  : checkAccessValue as unknown as Record<string, unknown>,
             });
         } catch (e) {
             console.error("check-login-status-error:", e);
