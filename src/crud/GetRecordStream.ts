@@ -8,166 +8,186 @@
 import { Crud } from "./Crud.ts";
 import { CrudOptionsType, CrudParamsType, ValueType } from "./types.ts";
 import {
-    computeSelectQueryAll,
-    computeSelectQueryByIds,
-    computeSelectQueryByParams
+  computeSelectQueryAll,
+  computeSelectQueryByIds,
+  computeSelectQueryByParams,
 } from "./helpers/index.ts";
-import { PoolClient, QueryObjectResult, } from "../../deps.ts";
+import { PoolClient, QueryObjectResult } from "../../deps.ts";
 
 // const Cursor = require("pg-cursor")
 
 export interface CursorResultType {
-    cursor?: QueryObjectResult;         // TODO: change to cursor type
-    client?: PoolClient;
-    ok: boolean;
-    message: string;
-    value?: ValueType;
+  cursor?: QueryObjectResult; // TODO: change to cursor type
+  client?: PoolClient;
+  ok: boolean;
+  message: string;
+  value?: ValueType;
 }
 
 class GetRecordStream extends Crud {
-    constructor(params: CrudParamsType, options: CrudOptionsType = {}) {
-        super(params, options);
-        // Set specific instance properties
+  constructor(params: CrudParamsType, options: CrudOptionsType = {}) {
+    super(params, options);
+    // Set specific instance properties
+  }
+
+  async getRecord(): Promise<CursorResultType> {
+    // Check/validate the attributes / parameters
+    const dbCheck = this.checkDb(this.appDb);
+    if (dbCheck.code !== "success") {
+      return {
+        ok: false,
+        message: dbCheck.message,
+      };
+    }
+    const auditDbCheck = this.checkDb(this.auditDb);
+    if (auditDbCheck.code !== "success") {
+      return {
+        ok: false,
+        message: auditDbCheck.message,
+      };
+    }
+    const accessDbCheck = this.checkDb(this.accessDb);
+    if (accessDbCheck.code !== "success") {
+      return {
+        ok: false,
+        message: accessDbCheck.message,
+      };
+    }
+    // set maximum limit and default values per query
+    if (this.limit < 1) {
+      this.limit = 1;
+    } else if (this.limit > this.maxQueryLimit) {
+      this.limit = this.maxQueryLimit;
+    }
+    if (this.skip < 0) {
+      this.skip = 0;
     }
 
-    async getRecord(): Promise<CursorResultType> {
-        // Check/validate the attributes / parameters
-        const dbCheck = this.checkDb(this.appDb);
-        if (dbCheck.code !== "success") {
-            return {
-                ok     : false,
-                message: dbCheck.message,
-            };
+    // Get the item(s) by docId(s), queryParams or all items
+    if (this.recordIds && this.recordIds.length > 0) {
+      try {
+        // process cursor-query by recordIds
+        const {
+          selectQueryObject,
+          ok,
+          message,
+        } = computeSelectQueryByIds(this.modelRef, this.table, this.recordIds, {
+          skip: this.skip,
+          limit: this.limit,
+        });
+        if (!ok) {
+          return {
+            ok: ok,
+            message: message,
+            value: {
+              selectQuery: selectQueryObject.selectQuery,
+              fieldValues: selectQueryObject.fieldValues,
+            },
+          };
         }
-        const auditDbCheck = this.checkDb(this.auditDb);
-        if (auditDbCheck.code !== "success") {
-            return {
-                ok     : false,
-                message: auditDbCheck.message,
-            };
-        }
-        const accessDbCheck = this.checkDb(this.accessDb);
-        if (accessDbCheck.code !== "success") {
-            return {
-                ok     : false,
-                message: accessDbCheck.message,
-            };
-        }
-        // set maximum limit and default values per query
-        if (this.limit < 1) {
-            this.limit = 1;
-        } else if (this.limit > this.maxQueryLimit) {
-            this.limit = this.maxQueryLimit;
-        }
-        if (this.skip < 0) {
-            this.skip = 0;
-        }
-
-        // Get the item(s) by docId(s), queryParams or all items
-        if (this.recordIds && this.recordIds.length > 0) {
-            try {
-
-                // process cursor-query by recordIds
-                const {
-                    selectQueryObject,
-                    ok,
-                    message
-                } = computeSelectQueryByIds(this.modelRef, this.table, this.recordIds, {
-                    skip : this.skip,
-                    limit: this.limit
-                })
-                if (!ok) {
-                    return {
-                        ok     : ok,
-                        message: message,
-                        value  : {
-                            selectQuery: selectQueryObject.selectQuery,
-                            fieldValues: selectQueryObject.fieldValues,
-                        }
-                    }
-                }
-                // const client = this.appDb
-                return {
-                    cursor : await this.appDb.queryObject(selectQueryObject.selectQuery, selectQueryObject.fieldValues),
-                    ok     : true,
-                    message: "success",
-                }
-            } catch (error) {
-                return {
-                    ok     : true,
-                    message: error.message,
-                    value  : error,
-                }
-            }
-        }
-        if (this.queryParams && Object.keys(this.queryParams).length > 0) {
-            try {
-                // process cursor-query by queryParams
-                const {
-                    selectQueryObject,
-                    ok,
-                    message
-                } = computeSelectQueryByParams(this.modelRef, this.table, this.queryParams, {
-                    skip : this.skip,
-                    limit: this.limit
-                })
-                if (!ok) {
-                    return {
-                        ok     : ok,
-                        message: message,
-                        value  : {
-                            selectQuery: selectQueryObject.selectQuery,
-                            fieldValues: selectQueryObject.fieldValues,
-                        }
-                    }
-                }
-                return {
-                    cursor : await this.appDb.queryObject(selectQueryObject.selectQuery, selectQueryObject.fieldValues),
-                    ok     : true,
-                    message: "success",
-                }
-            } catch (error) {
-                return {
-                    ok     : false,
-                    message: error.message,
-                };
-            }
-        }
-        // get all records, up to the permissible limit
-        try {
-            // process cursor-query, constrain by skip/limit
-            const {selectQueryObject, ok, message} = computeSelectQueryAll(this.modelRef, this.table, {
-                skip : this.skip,
-                limit: this.limit
-            })
-            if (!ok) {
-                return {
-                    ok     : ok,
-                    message: message,
-                    value  : {
-                        selectQuery: selectQueryObject.selectQuery,
-                        fieldValues: selectQueryObject.fieldValues,
-                    }
-                }
-            }
-            return {
-                cursor : await this.appDb.queryObject(selectQueryObject.selectQuery, selectQueryObject.fieldValues),
-                ok     : true,
-                message: "success",
-            }
-        } catch (error) {
-            return {
-                value  : error,
-                ok     : false,
-                message: error.message,
-            }
-        }
+        // const client = this.appDb
+        return {
+          cursor: await this.appDb.queryObject(
+            selectQueryObject.selectQuery,
+            selectQueryObject.fieldValues,
+          ),
+          ok: true,
+          message: "success",
+        };
+      } catch (error) {
+        return {
+          ok: true,
+          message: error.message,
+          value: error,
+        };
+      }
     }
+    if (this.queryParams && Object.keys(this.queryParams).length > 0) {
+      try {
+        // process cursor-query by queryParams
+        const {
+          selectQueryObject,
+          ok,
+          message,
+        } = computeSelectQueryByParams(
+          this.modelRef,
+          this.table,
+          this.queryParams,
+          {
+            skip: this.skip,
+            limit: this.limit,
+          },
+        );
+        if (!ok) {
+          return {
+            ok: ok,
+            message: message,
+            value: {
+              selectQuery: selectQueryObject.selectQuery,
+              fieldValues: selectQueryObject.fieldValues,
+            },
+          };
+        }
+        return {
+          cursor: await this.appDb.queryObject(
+            selectQueryObject.selectQuery,
+            selectQueryObject.fieldValues,
+          ),
+          ok: true,
+          message: "success",
+        };
+      } catch (error) {
+        return {
+          ok: false,
+          message: error.message,
+        };
+      }
+    }
+    // get all records, up to the permissible limit
+    try {
+      // process cursor-query, constrain by skip/limit
+      const { selectQueryObject, ok, message } = computeSelectQueryAll(
+        this.modelRef,
+        this.table,
+        {
+          skip: this.skip,
+          limit: this.limit,
+        },
+      );
+      if (!ok) {
+        return {
+          ok: ok,
+          message: message,
+          value: {
+            selectQuery: selectQueryObject.selectQuery,
+            fieldValues: selectQueryObject.fieldValues,
+          },
+        };
+      }
+      return {
+        cursor: await this.appDb.queryObject(
+          selectQueryObject.selectQuery,
+          selectQueryObject.fieldValues,
+        ),
+        ok: true,
+        message: "success",
+      };
+    } catch (error) {
+      return {
+        value: error,
+        ok: false,
+        message: error.message,
+      };
+    }
+  }
 }
 
 // factory function/constructor
-function newGetRecordStream(params: CrudParamsType, options: CrudOptionsType = {}) {
-    return new GetRecordStream(params, options);
+function newGetRecordStream(
+  params: CrudParamsType,
+  options: CrudOptionsType = {},
+) {
+  return new GetRecordStream(params, options);
 }
 
 export { GetRecordStream, newGetRecordStream };

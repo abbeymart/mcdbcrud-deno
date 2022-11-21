@@ -5,29 +5,29 @@
  * @Description: check-db connection / handle
  */
 
-import { getResMessage, ResponseMessage, PoolClient } from "../../deps.ts";
+import { getResMessage, PoolClient, ResponseMessage } from "../../deps.ts";
 import { DbConnectionType } from "./types.ts";
 
 export function checkDb(db: DbConnectionType): ResponseMessage {
-    if (db) {
-        return getResMessage("success", {
-            message: "valid database",
-        });
-    } else {
-        return getResMessage("validateError", {
-            message: "valid database is required",
-        });
-    }
+  if (db) {
+    return getResMessage("success", {
+      message: "valid database",
+    });
+  } else {
+    return getResMessage("validateError", {
+      message: "valid database is required",
+    });
+  }
 }
 
 export function checkDbClient(dbConnect: PoolClient): ResponseMessage {
-    if (dbConnect) {
-        return getResMessage("success", {
-            message: "valid database connection/handler",
-        });
-    } else {
-        return getResMessage("validateError", {
-            message: "valid database connection/handler is required",
-        });
-    }
+  if (dbConnect) {
+    return getResMessage("success", {
+      message: "valid database connection/handler",
+    });
+  } else {
+    return getResMessage("validateError", {
+      message: "valid database connection/handler is required",
+    });
+  }
 }

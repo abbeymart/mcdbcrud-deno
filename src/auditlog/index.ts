@@ -5,4 +5,4 @@
  * @Description: audit-log entry point
  */
 
-export * from './auditLog.ts';
+export * from "./auditLog.ts";

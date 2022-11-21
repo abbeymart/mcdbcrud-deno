@@ -7,4 +7,4 @@
 
 export * from "./types.ts";
 export * from "./checkDb.ts";
-export * from "./pgConnect.ts"
+export * from "./pgConnect.ts";

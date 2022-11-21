@@ -4,7 +4,7 @@
  * @Description: @mconnect/crud-mongo, mongoDB CRUD operations
  */
 
-export * from "./Crud.ts"
+export * from "./Crud.ts";
 export * from "./AuthCrud.ts";
 export * from "./validate.ts";
 export * from "./ValidateCrudParam.ts";

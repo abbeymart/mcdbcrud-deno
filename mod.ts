@@ -21,4 +21,4 @@
  */
 
 // export module functions
-export * from "./src/index.ts"
+export * from "./src/index.ts";
