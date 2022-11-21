@@ -1,9 +1,9 @@
 import { ActionParamsType, ActionParamType, CrudParamsType, TaskTypes } from "./types.ts";
 import { getResMessage, ResponseMessage } from "../../deps.ts";
 import { isEmptyObject } from "./validate.ts";
-import sanitize from "sanitize-html";
-import { gunzipSync, gzipSync } from "zlib";
 
+
+// checkTaskType checks and returns the database task type - create, update, delete from actionParams/records.
 export function checkTaskType(params: CrudParamsType): string {
     let taskType = TaskTypes.UNKNOWN
     if (params.actionParams && params.actionParams.length > 0) {
@@ -21,8 +21,8 @@ export function checkTaskType(params: CrudParamsType): string {
     return taskType
 }
 
+// validateActionParams function validates the actionParams - must be an array or 1 or more item(s).
 export function validateActionParams(actParams: ActionParamsType = []): ResponseMessage {
-    // validate req-params: actionParams must be an array or 1 or more item(s)
     if (actParams.length < 1) {
         return getResMessage('validateError', {
             message: "actionParams(record-inputs) must be an array of object values [ActionParamsType].",
@@ -31,11 +31,12 @@ export function validateActionParams(actParams: ActionParamsType = []): Response
     return getResMessage("success")
 }
 
-// deprecated??
+// camelToUnderscore computes and returns the underscore field name for the database table.
 export function camelToUnderscore(key: string): string {
     return key.replace(/([A-Z])/g, "_$1").toLowerCase();
 }
 
+// camelCase computes and returns the camelCase field name from a sep (default to _) fieldName.
 export const toCamelCase = (text: string, sep = '_'): string => {
     // accepts word/text and separator(' ', '_', '__', '.')
     const textArray = text.split(sep);
@@ -52,21 +53,10 @@ export const toCamelCase = (text: string, sep = '_'): string => {
     return `${firstWord}${otherWords.join('')}`;
 }
 
-export const setContentBody = (fieldValue: string): string => {
-    const sanitizeValue = sanitize(fieldValue);
-    const gzippedBuffer = gzipSync(sanitizeValue);
-    return gzippedBuffer.toString('base64');
-}
-
-export const getContentBody = (body: string): string => {
-    const gzippedBuffer = Buffer(body, 'base64');
-    const unzippedBuffer = gunzipSync(gzippedBuffer);
-    return unzippedBuffer.toString();
-}
-
-export const excludeEmptyIdFields = (recs: Array<ActionParamType>): Array<ActionParamType> => {
+// excludeEmptyIdFields excludes undefined or null-value ID fields from the records.
+export const excludeEmptyIdFields = (records: ActionParamsType): ActionParamsType => {
     const actParams: Array<ActionParamType> = []
-    for (const rec of recs) {
+    for (const rec of records) {
         const actParam: ActionParamType = {}
         for (const [key, value] of Object.entries(rec)) {
             if ((key === "id" || key.endsWith("Id")) && (!value || value === "")) {

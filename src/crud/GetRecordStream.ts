@@ -12,12 +12,12 @@ import {
     computeSelectQueryByIds,
     computeSelectQueryByParams
 } from "./helpers/index.ts";
-import { PoolClient, } from "../../deps.ts";
+import { PoolClient, QueryObjectResult, } from "../../deps.ts";
 
-const Cursor = require("pg-cursor")
+// const Cursor = require("pg-cursor")
 
 export interface CursorResultType {
-    cursor?: typeof Cursor;
+    cursor?: QueryObjectResult;         // TODO: change to cursor type
     client?: PoolClient;
     ok: boolean;
     message: string;
@@ -88,7 +88,7 @@ class GetRecordStream extends Crud {
                 }
                 // const client = this.appDb
                 return {
-                    cursor : this.appDb.queryObject(new Cursor(selectQueryObject.selectQuery, selectQueryObject.fieldValues)),
+                    cursor : await this.appDb.queryObject(selectQueryObject.selectQuery, selectQueryObject.fieldValues),
                     ok     : true,
                     message: "success",
                 }
@@ -122,7 +122,7 @@ class GetRecordStream extends Crud {
                     }
                 }
                 return {
-                    cursor : this.appDb.queryObject(new Cursor(selectQueryObject.selectQuery, selectQueryObject.fieldValues)),
+                    cursor : await this.appDb.queryObject(selectQueryObject.selectQuery, selectQueryObject.fieldValues),
                     ok     : true,
                     message: "success",
                 }
@@ -151,7 +151,7 @@ class GetRecordStream extends Crud {
                 }
             }
             return {
-                cursor : this.appDb.queryObject(new Cursor(selectQueryObject.selectQuery, selectQueryObject.fieldValues)),
+                cursor : await this.appDb.queryObject(selectQueryObject.selectQuery, selectQueryObject.fieldValues),
                 ok     : true,
                 message: "success",
             }
