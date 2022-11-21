@@ -15,8 +15,6 @@ export type ValueType =
   | { [key: string]: ValueType }
   | unknown;
 
-export type KeyType = string | Record<string, unknown> | number;
-
 export interface ObjectType {
   [key: string]: ValueType;
 }
