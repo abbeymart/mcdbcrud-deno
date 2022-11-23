@@ -4,11 +4,11 @@ import {
   MultiUpdateQueryResult,
   QueryParamsType,
   UpdateQueryObject,
-  UpdateQueryResult,
-} from "../types";
-import { computeWhereQuery } from "./computeWhereQuery";
-import { camelToUnderscore } from "../utils";
-import { isEmptyObject } from "../validate";
+  UpdateQueryResult, ValueType,
+} from "../types.ts";
+import { computeWhereQuery } from "./computeWhereQuery.ts";
+import { camelToUnderscore } from "../utils.ts";
+import { isEmptyObject } from "../validate.ts";
 
 const errMessage = (message: string) => {
   return {
@@ -45,12 +45,12 @@ export function computeUpdateQuery(
       return errMessageUpdates("tableName and actionParam are required.");
     }
     // compute updateQuery scripts from actionParams
-    let updateQueryObjects: Array<UpdateQueryObject> = [];
+    const updateQueryObjects: Array<UpdateQueryObject> = [];
     for (const actParam of actionParams) {
       const { id, ...updateParam } = actParam;
       // compute update script and associated place-holder values for the actionParam/record
       let updateQuery = `UPDATE ${tableName} SET `;
-      let fieldValues: Array<any> = [];
+      const fieldValues: Array<ValueType> = [];
       const fieldNames = Object.keys(updateParam).map((it) =>
         camelToUnderscore(it)
       );
@@ -99,9 +99,9 @@ export function computeUpdateQueryById(
       return errMessage("tableName, record-id and actionParam are required.");
     }
     // compute update script and associated place-holder values for the actionParam/record
-    const { id, ...updateParam } = actionParam;
+    const { _id, ...updateParam } = actionParam;
     let updateQuery = `UPDATE ${tableName} SET `;
-    let fieldValues: Array<any> = [];
+    const fieldValues: Array<ValueType> = [];
     const fieldNames = Object.keys(updateParam).map((it) =>
       camelToUnderscore(it)
     );
@@ -150,13 +150,13 @@ export function computeUpdateQueryByIds(
       return errMessage("tableName, record-ids and actionParam are required.");
     }
     // compute updateQuery script and associated place-holder values for the actionParam/record
-    const { id, ...updateParam } = actionParam;
+    const { _id, ...updateParam } = actionParam;
     let updateQuery = `UPDATE ${tableName} SET `;
     const fieldNames = Object.keys(updateParam).map((it) =>
       camelToUnderscore(it)
     );
     const fieldsLength = fieldNames.length;
-    let fieldValues: Array<any> = [];
+    const fieldValues: Array<ValueType> = [];
     let fieldCount = 0;
     for (const [fieldName, fieldValue] of Object.entries(updateParam)) {
       // next placeholder-value-position
@@ -208,13 +208,13 @@ export function computeUpdateQueryByParam(
     }
 
     // compute update script and associated place-holder values for the actionParam/record
-    const { id, ...updateParam } = actionParam;
+    const { _id, ...updateParam } = actionParam;
     let updateQuery = `UPDATE ${tableName} SET `;
     const fieldNames = Object.keys(updateParam).map((it) =>
       camelToUnderscore(it)
     );
     const fieldsLength = fieldNames.length;
-    let fieldValues: Array<any> = [];
+    let fieldValues: Array<ValueType> = [];
     let fieldCount = 0;
     for (const [fieldName, fieldValue] of Object.entries(updateParam)) {
       // next placeholder-value-position

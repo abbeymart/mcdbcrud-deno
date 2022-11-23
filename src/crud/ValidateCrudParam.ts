@@ -6,13 +6,13 @@
  */
 
 // import {isEmptyObject} from "./validate";
-import * as utils from "./validate";
-import { CrudParamsType, MessageObject } from "./types";
-import { mcMessages } from "../messages";
+import * as utils from "./validate.ts";
+import { CrudParamsType, MessageObject } from "./types.ts";
+import { mcMessages } from "../messages.ts";
 
 export function validateSaveParams(crudParams: CrudParamsType) {
   // Initialise error object and patterns matching:
-  let errors: MessageObject = {};
+  const errors: MessageObject = {};
   try {
     if (crudParams.table) {
       // Check input formats/patterns
@@ -91,7 +91,7 @@ export function validateSaveParams(crudParams: CrudParamsType) {
     //     errors.tokenRequired = "token or userInfo is required";
     // }
   } catch (e) {
-    console.error("Error validating save-record(s) inputs");
+    console.error("Error validating save-record(s) inputs: ", e);
     errors.validationError = "Error validating save-record(s) inputs";
   }
 
@@ -100,7 +100,7 @@ export function validateSaveParams(crudParams: CrudParamsType) {
 
 export function validateDeleteParams(crudParams: CrudParamsType) {
   // Initialise error object and patterns matching:
-  let errors: MessageObject = {};
+  const errors: MessageObject = {};
 
   try {
     if (crudParams.table) {
@@ -168,7 +168,7 @@ export function validateDeleteParams(crudParams: CrudParamsType) {
     //     errors.tokenRequired = "token or userInfo is required";
     // }
   } catch (e) {
-    console.error("Error validating delete-record(s) inputs");
+    console.error("Error validating delete-record(s) inputs: ", e);
     errors.validationError = "Error validating delete-record(s) inputs";
   }
 
@@ -177,7 +177,7 @@ export function validateDeleteParams(crudParams: CrudParamsType) {
 
 export function validateGetParams(crudParams: CrudParamsType) {
   // Initialise error object and patterns matching:
-  let errors: MessageObject = {};
+  const errors: MessageObject = {};
 
   try {
     if (crudParams.table) {
@@ -251,7 +251,7 @@ export function validateGetParams(crudParams: CrudParamsType) {
     //     errors.tokenRequired = "token or userInfo is required";
     // }
   } catch (e) {
-    console.error("Error validating get-record(s) inputs");
+    console.error("Error validating get-record(s) inputs: ", e);
     errors.validationError = "Error validating get-record(s) inputs";
   }
 
@@ -260,7 +260,7 @@ export function validateGetParams(crudParams: CrudParamsType) {
 
 export function validateLoadParams(crudParams: CrudParamsType) {
   // Initialise error object and patterns matching:
-  let errors: MessageObject = {};
+  const errors: MessageObject = {};
 
   try {
     if (crudParams.table) {
@@ -287,7 +287,7 @@ export function validateLoadParams(crudParams: CrudParamsType) {
         "required-error; info is required";
     }
   } catch (e) {
-    console.error("Error validating load-record(s) inputs");
+    console.error("Error validating load-record(s) inputs: ", e);
     errors.validationError = "Error validating load-record(s) inputs";
   }
 

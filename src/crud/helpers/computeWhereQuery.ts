@@ -1,6 +1,6 @@
-import { QueryParamsType, WhereQueryResult } from "../types";
-import { camelToUnderscore } from "../utils";
-import { isEmptyObject } from "../validate";
+import { QueryParamsType, ValueType, WhereQueryResult } from "../types.ts";
+import { camelToUnderscore } from "../utils.ts";
+import { isEmptyObject } from "../validate.ts";
 
 const errMessage = (message: string) => {
   return {
@@ -28,7 +28,7 @@ export function computeWhereQuery(
 
     // script-computation-variables
     let whereQuery = " WHERE ";
-    let fieldValues: Array<any> = [];
+    const fieldValues: Array<ValueType> = [];
     let fieldCount = 0;
     const whereFieldsLength = Object.keys(queryParams).length;
 

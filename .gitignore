@@ -5,4 +5,5 @@
 .history
 .temp/**
 test/config.ts
+test/config
 .github

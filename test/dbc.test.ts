@@ -52,7 +52,7 @@ const dbc = newDbPg(myDb, myDb.options);
       let pResult = false;
       try {
         await dbc.pgPool().connect();
-        console.log("pool-client--connected: ");
+        console.log("pool-client-connected: ");
         pResult = true;
       } catch (e) {
         console.log("pool-client-connect-error: ", e);

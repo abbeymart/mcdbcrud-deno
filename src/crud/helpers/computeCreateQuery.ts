@@ -1,5 +1,5 @@
-import { ActionParamsType, CreateQueryResult } from "../types";
-import { camelToUnderscore } from "../utils";
+import { ActionParamsType, CreateQueryResult, ValueType } from "../types.ts";
+import { camelToUnderscore } from "../utils.ts";
 
 const errMessage = (message: string) => {
   return {
@@ -47,10 +47,10 @@ export function computeCreateQuery(
     createQuery += " RETURNING id";
 
     // compute create-record-values from actionParams/records, in order of the field-names sequence
-    let fieldValues: Array<Array<any>> = [];
+    const fieldValues: Array<Array<ValueType>> = [];
     for (const rec of actionParams) {
       // compute item-values
-      let recFieldValues: Array<any> = [];
+      const recFieldValues: Array<ValueType> = [];
       for (const fieldName of fieldNames) {
         const fieldValue = rec[fieldName];
         // fieldValue must be defined/valid
