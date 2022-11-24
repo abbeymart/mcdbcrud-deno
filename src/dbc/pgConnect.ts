@@ -59,9 +59,9 @@ export class DbPg {
             port   : this.port,
             user   : this.username,
             tls    : {
-                enforce       : dbConfig.secureOption?.enforce !== undefined ? dbConfig.secureOption?.enforce :
+                enforce       : dbConfig.secureOption?.enforce !== undefined ? dbConfig.secureOption.enforce :
                     appEnv !== "development",
-                enabled       : dbConfig.secureOption?.enabled !== undefined ? dbConfig.secureOption?.enabled :
+                enabled       : dbConfig.secureOption?.enabled !== undefined ? dbConfig.secureOption.enabled :
                     appEnv !== "development",
                 caCertificates: dbConfig.secureOption?.caCertificates || [],
             },

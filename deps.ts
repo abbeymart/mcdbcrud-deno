@@ -29,3 +29,4 @@ export type {
   ClientConfiguration,
   TLSOptions,
 } from "https://deno.land/x/postgres@v0.17.0/connection/connection_params.ts";
+export { Caesar } from "https://deno.land/x/encryption_lib@0.1.4/mod.ts";
