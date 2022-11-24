@@ -4,8 +4,7 @@ import {
   ObjectType,
   postTestResult,
 } from "../test_deps.ts";
-import { AuditDb, MyDb } from "../../config/dbConfig.ts";
-import { CrudParamsType, newDbPg, newDeleteRecord } from "../src/index.ts";
+import { CrudParamsType, DbConfigType, newDbPg, newDeleteRecord } from "../src/index.ts";
 import {
   AuditModel,
   CrudParamOptions,
@@ -16,11 +15,20 @@ import {
   DeleteTable,
   TestUserInfo,
 } from "./testData.ts";
+import { decryptEncodedFile } from "./config/config.ts";
 
-const myDb = MyDb;
+let configOptions: ObjectType = {};
+try {
+  configOptions = decryptEncodedFile();
+  console.log("config-options: ", configOptions);
+} catch (e) {
+  console.error("\nConfiguration error: ", e);
+  Deno.exit(1);
+}
+const myDb = configOptions.appDb as DbConfigType;
 myDb.options = {};
 
-const aDb = AuditDb;
+const aDb = configOptions.auditDb as DbConfigType;
 aDb.options = {};
 
 const dbc = newDbPg(myDb, myDb.options);

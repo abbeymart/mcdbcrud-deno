@@ -1,6 +1,5 @@
 import { assertEquals, mcTest, postTestResult } from "../test_deps.ts";
 import { DbConfigType, newDbPg } from "../src/index.ts";
-// import { MyDb } from "../../config/dbConfig.ts";
 import { decryptEncodedFile, ObjectType } from "./config/config.ts";
 
 // test-data: db-configuration settings
@@ -11,9 +10,6 @@ try {
 } catch (e) {
     console.error("\nConfiguration error: ", e);
     Deno.exit(1);
-}
-if (!configOptions) {
-
 }
 const myDb = configOptions.appDb as DbConfigType;
 myDb.options = {};

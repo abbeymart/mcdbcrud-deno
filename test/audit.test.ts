@@ -1,11 +1,11 @@
 import { assertEquals, mcTest, postTestResult } from "../test_deps.ts";
-import { MyDb } from "../../config/dbConfig.ts";
 import {
-  AuditLogTypes,
+  AuditLogTypes, DbConfigType,
   LogRecordsType,
   newAuditLog,
   newDbPg,
 } from "../src/index.ts";
+import { decryptEncodedFile, ObjectType } from "./config/config.ts";
 
 //
 const tableName = "services";
@@ -32,7 +32,15 @@ const readP: LogRecordsType = {
   logRecords: { keywords: ["lagos", "yoruba", "ghana", "accra"] },
 };
 
-const myDb = MyDb;
+let configOptions: ObjectType = {};
+try {
+  configOptions = decryptEncodedFile();
+  console.log("config-options: ", configOptions);
+} catch (e) {
+  console.error("\nConfiguration error: ", e);
+  Deno.exit(1);
+}
+const myDb = configOptions.appDb as DbConfigType;
 myDb.options = {};
 
 const dbc = newDbPg(myDb, myDb.options);
