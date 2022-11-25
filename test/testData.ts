@@ -198,13 +198,13 @@ export const DeleteAuditByParams: QueryParamsType = {
   "logType": "read",
 };
 
-export const UpdateAuditById = "d9cb7344-2c37-4492-9bf1-d6fa5ccc9634";
+export const UpdateAuditById = "708713f2-ea16-404a-959c-2cb5762c394a";
 export const UpdateAuditByIds: Array<string> = [
-  "d9cb7344-2c37-4492-9bf1-d6fa5ccc9634",
+  "91b3c435-fce7-4d28-9e05-cc9feafb5b48",
   "40afeaf8-abbb-43be-9c44-1642f393f0e9",
-  "5cd69f14-1945-400a-91fd-8ea6ca51cd64",
+  "3e56eb70-9fa1-4881-b8b4-11a114cb5673",
 ];
 
 export const UpdateAuditByParams: QueryParamsType = {
-  "logType": "read",
+  "logType": "login",
 };

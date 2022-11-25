@@ -125,11 +125,11 @@ export class DbPg {
     }
 
     async closePgPool() {
-        return await this.pgPool().end();
+        return await this.dbPool.end();
     }
 
     async closePgClient() {
-        return await this.pgClient().end();
+        return await this.dbClient.end();
     }
 }
 

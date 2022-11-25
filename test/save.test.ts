@@ -29,7 +29,6 @@ import { decryptEncodedFile } from "./config/config.ts";
 let configOptions: ObjectType = {};
 try {
   configOptions = decryptEncodedFile();
-  console.log("config-options: ", configOptions);
 } catch (e) {
   console.error("\nConfiguration error: ", e);
   Deno.exit(1);
@@ -164,8 +163,9 @@ const auditDbc = newDbPg(aDb, aDb.options);
       const recLen = crudParams.recordIds.length;
       const crud = newSaveRecord(crudParams, CrudParamOptions);
       const res = await crud.saveRecord();
+      // console.log("Res-message: ", res.message);
       const resValue = res.value as CrudResultType;
-      const idLen = resValue.recordIds?.length || 0;
+      // const idLen = resValue.recordIds?.length || 0;
       const recCount = resValue.recordsCount || 0;
       assertEquals(
         res.code,
@@ -173,7 +173,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
         `update-by-id-task should return code: success`,
       );
       assertEquals(
-        idLen,
+        recCount,
         recLen,
         `response-value-records-length should be: ${recLen}`,
       );
@@ -210,6 +210,6 @@ const auditDbc = newDbPg(aDb, aDb.options);
     },
   });
 
-  await postTestResult();
+  postTestResult();
   await dbc.closePgPool();
 })();

@@ -20,7 +20,6 @@ import { decryptEncodedFile } from "./config/config.ts";
 let configOptions: ObjectType = {};
 try {
   configOptions = decryptEncodedFile();
-  console.log("config-options: ", configOptions);
 } catch (e) {
   console.error("\nConfiguration error: ", e);
   Deno.exit(1);

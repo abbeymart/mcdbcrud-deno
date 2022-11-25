@@ -6,12 +6,11 @@ import { decryptEncodedFile, ObjectType } from "./config/config.ts";
 let configOptions: ObjectType = {};
 try {
     configOptions = decryptEncodedFile();
-    console.log("config-options: ", configOptions);
 } catch (e) {
     console.error("\nConfiguration error: ", e);
     Deno.exit(1);
 }
-const myDb = configOptions.appDb as DbConfigType;
+const myDb = configOptions.auditDb as DbConfigType;
 myDb.options = {};
 
 const dbc = newDbPg(myDb, myDb.options);
@@ -72,5 +71,5 @@ const dbc = newDbPg(myDb, myDb.options);
         },
     });
 
-    await postTestResult();
+    postTestResult();
 })();
