@@ -1,5 +1,10 @@
 # Historical logs
 
+## Version 0.2.1
+
+- Release date: Nov 24, 2022
+- Documentation-updated-v0.2.1
+
 ## Version 0.2.0
 
 - Release date: Nov 24, 2022
