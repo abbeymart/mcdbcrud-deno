@@ -1,5 +1,10 @@
 # Historical logs
 
+## Version 0.2.3
+
+- Release date: Nov 26, 2022
+- Corrected-id-field-naming-v0.2.3
+
 ## Version 0.2.2
 
 - Release date: Nov 25, 2022
