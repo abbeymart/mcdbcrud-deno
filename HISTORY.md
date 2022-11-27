@@ -1,5 +1,10 @@
 # Historical logs
 
+## Version 0.2.4
+
+- Release date: Nov 26, 2022
+- Corrected-desc-field-naming-v0.2.4
+
 ## Version 0.2.3
 
 - Release date: Nov 26, 2022

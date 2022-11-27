@@ -96,12 +96,13 @@ export interface UserInfoType {
 export interface BaseModelType {
     id?: string;
     language?: string;
-    desc?: string;
+    description?: string;
     isActive?: boolean;
-    createdBy?: string | null;
-    updatedBy?: string | null;
+    createdBy?: string;
+    updatedBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
+    deletedBy?: string;
     deletedAt?: Date;
     appId?: string | null; // application-id in a multi-hosted apps environment (e.g. cloud-env)
 }
