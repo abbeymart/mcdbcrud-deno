@@ -1,10 +1,9 @@
 import {
   assertEquals,
   mcTest,
-  ObjectType,
   postTestResult,
 } from "../test_deps.ts";
-import { CrudParamsType, DbConfigType, newDbPg, newDeleteRecord } from "../src/index.ts";
+import { CrudParamsType, DbConfigType, newDbPg, newDeleteRecord, ObjectType, } from "../src/index.ts";
 import {
   AuditModel,
   CrudParamOptions,

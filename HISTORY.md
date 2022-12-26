@@ -1,5 +1,10 @@
 # Historical logs
 
+## Version 0.2.6
+
+- Release date: Dec 26, 2022
+- Refactor-ObjectType-ref-v0.2.6
+
 ## Version 0.2.5
 
 - Release date: Nov 26, 2022
