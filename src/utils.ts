@@ -4,8 +4,8 @@
  * @Description: common util functions
  */
 
-import { getResMessage } from "../deps.ts";
-import { isEmpty, ObjectType, ValueType } from "./crud/index.ts";
+import { getResMessage, ValueType } from "../deps.ts";
+import { isEmpty, ObjectType, } from "./crud/index.ts";
 
 // types
 interface ValueObject {

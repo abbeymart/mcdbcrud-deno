@@ -3,12 +3,9 @@ import {
     mcTest,
     postTestResult,
 } from "../test_deps.ts";
+import { ValueType } from "../deps.ts";
 import {
-    CrudParamsType,
-    CrudResultType, DbConfigType,
-    newDbPg,
-    newSaveRecord,
-    ObjectType,
+    CrudParamsType, CrudResultType, newDbPg, newSaveRecord,
 } from "../src/index.ts";
 import {
     AuditCreateActionParams,
@@ -24,35 +21,28 @@ import {
     UpdateAuditByParams,
     UpdateTable,
 } from "./testData.ts";
-import { decryptEncodedFile } from "./config/config.ts";
+import { appDb, auditDb } from "./config/dbConfig.ts";
 
-let configOptions: ObjectType = {};
-try {
-    configOptions = decryptEncodedFile();
-} catch (e) {
-    console.error("\nConfiguration error: ", e);
-    Deno.exit(1);
-}
-const myDb = configOptions.appDb as DbConfigType;
+const myDb = appDb;
 myDb.options = {};
 
-const aDb = configOptions.auditDb as DbConfigType;
+const aDb = auditDb;
 aDb.options = {};
 
 const dbc = newDbPg(myDb, myDb.options);
 const auditDbc = newDbPg(aDb, aDb.options);
 
 (async () => {
-    const dbPool = await dbc.pgPool();
+    const dbPool = dbc.pgPool();
     const dbPoolClient = await dbPool.connect();
 
-    const auditDbPool = await auditDbc.pgPool();
+    const auditDbPool = auditDbc.pgPool();
 
     CrudParamOptions.auditDb = await auditDbPool.connect();
 
     const crudParams: CrudParamsType = {
         appDb      : dbPoolClient,
-        modelRef   : AuditModel as unknown as ObjectType,
+        modelRef   : AuditModel,
         table      : AuditTable,
         userInfo   : TestUserInfo,
         recordIds  : [],
@@ -70,7 +60,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             const crud = newSaveRecord(crudParams, CrudParamOptions);
             const res = await crud.saveRecord();
             // console.log("create-result: ", res, res.code, res.value.recordIds, res.value.recordCount)
-            const resValue = res.value as CrudResultType;
+            const resValue = res.value as CrudResultType<ValueType>;
             const idLen = resValue.recordIds?.length || 0;
             const recCount = resValue.recordsCount || 0;
             assertEquals(
@@ -101,7 +91,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             const recLen = crudParams.actionParams.length;
             const crud = newSaveRecord(crudParams, CrudParamOptions);
             const res = await crud.saveRecord();
-            const resValue = res.value as CrudResultType;
+            const resValue = res.value as CrudResultType<ValueType>;
             const idLen = resValue.recordIds?.length || 0;
             const recCount = resValue.recordsCount || 0;
             assertEquals(
@@ -132,7 +122,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             const recLen = crudParams.recordIds.length;
             const crud = newSaveRecord(crudParams, CrudParamOptions);
             const res = await crud.saveRecord();
-            const resValue = res.value as CrudResultType;
+            const resValue = res.value as CrudResultType<ValueType>;
             const idLen = resValue.recordIds?.length || 0;
             const recCount = resValue.recordsCount || 0;
             assertEquals(
@@ -164,7 +154,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             const crud = newSaveRecord(crudParams, CrudParamOptions);
             const res = await crud.saveRecord();
             // console.log("Res-message: ", res.message);
-            const resValue = res.value as CrudResultType;
+            const resValue = res.value as CrudResultType<ValueType>;
             // const idLen = resValue.recordIds?.length || 0;
             const recCount = resValue.recordsCount || 0;
             assertEquals(
@@ -195,7 +185,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             const recLen = 0;
             const crud = newSaveRecord(crudParams, CrudParamOptions);
             const res = await crud.saveRecord();
-            const resValue = res.value as CrudResultType;
+            const resValue = res.value as CrudResultType<ValueType>;
             const recCount = resValue.recordsCount || 0;
             assertEquals(
                 res.code,

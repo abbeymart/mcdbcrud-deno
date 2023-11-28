@@ -1,19 +1,19 @@
 import { AuditLog } from "../auditlog/index.ts";
-import { PoolClient, ResponseMessage } from "../../deps.ts";
+import { PoolClient, ResponseMessage, ValueType } from "../../deps.ts";
 
-export type ValueType =
-    | Record<string, unknown>
-    | Array<Record<string, unknown>>
-    | string
-    | number
-    | Array<string>
-    | Array<number>
-    | Date
-    | Array<Date>
-    | boolean
-    | Array<boolean>
-    | { [key: string]: ValueType }
-    | unknown;
+// export type ValueType =
+//     | Record<string, unknown>
+//     | Array<Record<string, unknown>>
+//     | string
+//     | number
+//     | Array<string>
+//     | Array<number>
+//     | Date
+//     | Array<Date>
+//     | boolean
+//     | Array<boolean>
+//     | { [key: string]: ValueType }
+//     | unknown;
 
 export interface ObjectType {
     [key: string]: ValueType;
@@ -31,16 +31,16 @@ export interface GetRecordStats {
 
 export type GetRecords = Array<ObjectType>;
 
-export interface GetResultType {
+export interface GetResultType<T extends ValueType> {
     records: GetRecords;
     stats: GetRecordStats;
-    logRes?: ResponseMessage;
+    logRes?: ResponseMessage<T>;
     taskType?: string;
 }
 
-export interface DeleteResultType {
+export interface DeleteResultType<T extends ValueType> {
     recordsCount: number;
-    logRes?: ResponseMessage;
+    logRes?: ResponseMessage<T>;
 }
 
 export interface LogRecordsType {
@@ -50,19 +50,19 @@ export interface LogRecordsType {
     tableFields?: Array<string>;
 }
 
-export interface CrudResultType {
+export interface CrudResultType<T extends ValueType> {
     queryParams?: QueryParamsType;
     recordIds?: Array<string>;
     recordsCount?: number;
     records?: ActionParamsType;
     taskType?: string;
-    logRes?: ResponseMessage;
+    logRes?: ResponseMessage<T>;
 }
 
-export interface SaveResultType {
+export interface SaveResultType<T extends ValueType> {
     recordsCount: number;
     taskType?: string;
-    logRes?: ResponseMessage;
+    logRes?: ResponseMessage<T>;
     recordIds?: Array<string>;
     queryParams?: QueryParamsType;
 }
@@ -345,7 +345,7 @@ export interface ModelOptionsType {
 }
 
 export interface CrudParamsType {
-    modelRef: ObjectType;
+    modelRef: ActionParamType;
     appDb: PoolClient;
     table: string;
     userInfo?: UserInfoType;

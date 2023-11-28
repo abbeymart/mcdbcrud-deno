@@ -6,13 +6,13 @@
 
 // Import required module(s)
 import { Crud } from "./Crud.ts";
-import { CrudOptionsType, CrudParamsType, ValueType } from "./types.ts";
+import { CrudOptionsType, CrudParamsType } from "./types.ts";
 import {
   computeSelectQueryAll,
   computeSelectQueryByIds,
   computeSelectQueryByParams,
 } from "./helpers/index.ts";
-import { PoolClient, QueryObjectResult } from "../../deps.ts";
+import { PoolClient, QueryObjectResult, ValueType } from "../../deps.ts";
 
 // const Cursor = require("pg-cursor")
 
@@ -24,7 +24,7 @@ export interface CursorResultType {
   value?: ValueType;
 }
 
-class GetRecordStream extends Crud {
+class GetRecordStream<T extends ValueType> extends Crud<T> {
   constructor(params: CrudParamsType, options: CrudOptionsType = {}) {
     super(params, options);
     // Set specific instance properties

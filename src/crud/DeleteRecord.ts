@@ -11,7 +11,7 @@ import {
   getResMessage,
   QueryHashCacheParamsType,
   QueryObjectResult,
-  ResponseMessage,
+  ResponseMessage, ValueType,
 } from "../../deps.ts";
 import { Crud } from "./Crud.ts";
 import {
@@ -28,24 +28,24 @@ import {
 } from "./helpers/index.ts";
 import { AuditLogOptionsType } from "../auditlog/index.ts";
 
-class DeleteRecord extends Crud {
+class DeleteRecord<T extends ValueType> extends Crud<T> {
   constructor(params: CrudParamsType, options: CrudOptionsType = {}) {
     super(params, options);
     // Set specific instance properties
     this.currentRecs = [];
   }
 
-  async deleteRecord(): Promise<ResponseMessage> {
+  async deleteRecord<T>(): Promise<ResponseMessage<T>> {
     // Check/validate the databases
-    const dbCheck = this.checkDb(this.appDb);
+    const dbCheck = this.checkDb<T>(this.appDb);
     if (dbCheck.code !== "success") {
       return dbCheck;
     }
-    const auditDbCheck = this.checkDb(this.auditDb);
+    const auditDbCheck = this.checkDb<T>(this.auditDb);
     if (auditDbCheck.code !== "success") {
       return auditDbCheck;
     }
-    const accessDbCheck = this.checkDb(this.accessDb);
+    const accessDbCheck = this.checkDb<T>(this.accessDb);
     if (accessDbCheck.code !== "success") {
       return accessDbCheck;
     }
@@ -54,30 +54,30 @@ class DeleteRecord extends Crud {
       try {
         // check task-permission
         if (this.checkAccess) {
-          const accessRes = await this.taskPermissionById(TaskTypes.DELETE);
+          const accessRes = await this.taskPermissionById<T>(TaskTypes.DELETE);
           if (accessRes.code != "success") {
             return accessRes;
           }
         }
         // check if records exist, for delete and audit-log
         if (this.logDelete) {
-          const recExistRes = await this.getCurrentRecords("id");
+          const recExistRes = await this.getCurrentRecords<T>("id");
           if (recExistRes.code !== "success") {
             return recExistRes;
           }
         }
         // delete/remove records
         if (this.recordIds.length === 1) {
-          return await this.removeRecordById();
+          return await this.removeRecordById<T>();
         }
-        return await this.removeRecordByIds();
+        return await this.removeRecordByIds<T>();
       } catch (error) {
-        return getResMessage("removeError", {
+        return getResMessage<T>("removeError", {
           message: error.message ? error.message : "Error removing record(s)",
           value: {
             queryParams: this.queryParams,
             recordIds: this.recordIds,
-          },
+          } as T,
         });
       }
     }
@@ -86,26 +86,26 @@ class DeleteRecord extends Crud {
       try {
         // check task-permission
         if (this.checkAccess) {
-          const accessRes = await this.taskPermissionByParams(TaskTypes.DELETE);
+          const accessRes = await this.taskPermissionByParams<T>(TaskTypes.DELETE);
           if (accessRes.code != "success") {
             return accessRes;
           }
         }
         if (this.logDelete) {
-          const recExistRes = await this.getCurrentRecords("queryParams");
+          const recExistRes = await this.getCurrentRecords<T>("queryParams");
           if (recExistRes.code !== "success") {
             return recExistRes;
           }
         }
         // delete/remove records
-        return await this.removeRecordByParams();
+        return await this.removeRecordByParams<T>();
       } catch (error) {
-        return getResMessage("removeError", {
+        return getResMessage<T>("removeError", {
           message: error.message,
           value: {
             queryParams: this.queryParams,
             recordIds: this.recordIds,
-          },
+          } as T,
         });
       }
     }
@@ -115,13 +115,13 @@ class DeleteRecord extends Crud {
       value: {
         queryParams: this.queryParams,
         recordIds: this.recordIds,
-      },
+      } as T,
       message:
         "Unable to perform the requested action(s), due to incomplete/incorrect delete conditions - by recordIds or queryParams only. ",
     });
   }
 
-  async removeRecordById(): Promise<ResponseMessage> {
+  async removeRecordById<T>(): Promise<ResponseMessage<T>> {
     try {
       const { deleteQueryObject, ok, message } = computeDeleteQueryById(
         this.table,
@@ -135,7 +135,7 @@ class DeleteRecord extends Crud {
             recordIds: this.recordIds,
             deleteQuery: deleteQueryObject.deleteQuery,
             fieldValues: deleteQueryObject.fieldValues,
-          },
+          } as T,
         });
       }
       const res = await this.appDb.queryObject(
@@ -154,7 +154,7 @@ class DeleteRecord extends Crud {
         code: "noLog",
         message: "noLog",
         value: {},
-      } as ResponseMessage;
+      } as ResponseMessage<ValueType>;
       if (this.logDelete || this.logCrud) {
         const logRecs: LogRecordsType = { logRecords: this.currentRecs };
         const logParams: AuditLogOptionsType = {
@@ -168,7 +168,7 @@ class DeleteRecord extends Crud {
         value: {
           recordCount: res.rowCount,
           logRes,
-        },
+        } as T,
       });
     } catch (e) {
       return getResMessage("removeError", {
@@ -178,12 +178,12 @@ class DeleteRecord extends Crud {
         value: {
           queryParams: this.queryParams,
           recordIds: this.recordIds,
-        },
+        } as T,
       });
     }
   }
 
-  async removeRecordByIds(): Promise<ResponseMessage> {
+  async removeRecordByIds<T>(): Promise<ResponseMessage<T>> {
     try {
       const { deleteQueryObject, ok, message } = computeDeleteQueryByIds(
         this.table,
@@ -197,7 +197,7 @@ class DeleteRecord extends Crud {
             recordIds: this.recordIds,
             deleteQuery: deleteQueryObject.deleteQuery,
             fieldValues: deleteQueryObject.fieldValues,
-          },
+          } as T,
         });
       }
       const res = await this.appDb.queryObject(
@@ -216,7 +216,7 @@ class DeleteRecord extends Crud {
         code: "noLog",
         message: "noLog",
         value: {},
-      } as ResponseMessage;
+      } as ResponseMessage<ValueType>;
       if (this.logDelete || this.logCrud) {
         const logRecs: LogRecordsType = { logRecords: this.currentRecs };
         const logParams: AuditLogOptionsType = {
@@ -230,7 +230,7 @@ class DeleteRecord extends Crud {
         value: {
           recordCount: res.rowCount,
           logRes,
-        },
+        } as T,
       });
     } catch (e) {
       return getResMessage("removeError", {
@@ -240,12 +240,12 @@ class DeleteRecord extends Crud {
         value: {
           queryParams: this.queryParams,
           recordIds: this.recordIds,
-        },
+        } as T,
       });
     }
   }
 
-  async removeRecordByParams(): Promise<ResponseMessage> {
+  async removeRecordByParams<T>(): Promise<ResponseMessage<T>> {
     try {
       if (this.queryParams && !isEmptyObject(this.queryParams)) {
         const { deleteQueryObject, ok, message } = computeDeleteQueryByParam(
@@ -260,7 +260,7 @@ class DeleteRecord extends Crud {
               recordIds: this.recordIds,
               deleteQueryObject: deleteQueryObject,
               fieldValues: deleteQueryObject.fieldValues,
-            },
+            } as T,
           });
         }
         const res = await this.appDb.queryObject(
@@ -279,7 +279,7 @@ class DeleteRecord extends Crud {
           code: "noLog",
           message: "noLog",
           value: {},
-        } as ResponseMessage;
+        } as ResponseMessage<ValueType>;
         if (this.logDelete || this.logCrud) {
           const logRecs: LogRecordsType = { logRecords: this.currentRecs };
           const logParams: AuditLogOptionsType = {
@@ -293,7 +293,7 @@ class DeleteRecord extends Crud {
           value: {
             recordCount: res.rowCount,
             logRes,
-          },
+          } as T,
         });
       } else {
         return getResMessage("removeError", {
@@ -301,7 +301,7 @@ class DeleteRecord extends Crud {
           value: {
             queryParams: this.queryParams,
             recordIds: this.recordIds,
-          },
+          } as T,
         });
       }
     } catch (e) {
@@ -312,7 +312,7 @@ class DeleteRecord extends Crud {
         value: {
           queryParams: this.queryParams,
           recordIds: this.recordIds,
-        },
+        } as T,
       });
     }
   }

@@ -1,17 +1,17 @@
 // export standard dependencies
 
 // export third party dependencies
-export * from "https://deno.land/x/mcresponse@v0.2.1/mod.ts";
+export * from "https://deno.land/x/mcresponse@v0.3.2/mod.ts";
 export {
   clearHashCache,
   deleteHashCache,
   getHashCache,
   setHashCache,
-} from "https://deno.land/x/mccache@v0.2.2/mod.ts";
+} from "https://deno.land/x/mccache@v0.3.1/mod.ts";
 export type {
   HashCacheParamsType,
   QueryHashCacheParamsType,
-} from "https://deno.land/x/mccache@v0.2.2/mod.ts";
+} from "https://deno.land/x/mccache@v0.3.1/mod.ts";
 
 export {
   Client,
@@ -29,4 +29,6 @@ export type {
   ClientConfiguration,
   TLSOptions,
 } from "https://deno.land/x/postgres@v0.17.0/connection/connection_params.ts";
+
+// remove - and re-use when stable
 export { Caesar } from "https://deno.land/x/encryption_lib@0.1.4/mod.ts";

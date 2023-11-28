@@ -7,14 +7,14 @@
 
 import { Crud } from "./Crud.ts";
 import { CrudOptionsType, CrudParamsType, TaskTypes } from "./types.ts";
-import { ResponseMessage } from "../../deps.ts";
+import { ResponseMessage, ValueType, } from "../../deps.ts";
 
 export class AuthCrud extends Crud {
   constructor(params: CrudParamsType, options: CrudOptionsType = {}) {
     super(params, options);
   }
 
-  async authGet(by = "id"): Promise<ResponseMessage> {
+  async authGet(by = "id"): Promise<ResponseMessage<ValueType>> {
     // check/validate action permissions
     if (by.toLowerCase() !== "id") {
       return await this.taskPermissionByParams(TaskTypes.READ);
@@ -23,7 +23,7 @@ export class AuthCrud extends Crud {
     }
   }
 
-  async authCreate(by = "id"): Promise<ResponseMessage> {
+  async authCreate(by = "id"): Promise<ResponseMessage<ValueType>> {
     // check/validate action permissions
     if (by.toLowerCase() !== "id") {
       return await this.taskPermissionByParams(TaskTypes.CREATE);
@@ -32,7 +32,7 @@ export class AuthCrud extends Crud {
     }
   }
 
-  async authUpdate(by = "id"): Promise<ResponseMessage> {
+  async authUpdate(by = "id"): Promise<ResponseMessage<ValueType>> {
     // check/validate action permissions
     if (by.toLowerCase() !== "id") {
       return await this.taskPermissionByParams(TaskTypes.UPDATE);
@@ -41,7 +41,7 @@ export class AuthCrud extends Crud {
     }
   }
 
-  async authDelete(by = "id"): Promise<ResponseMessage> {
+  async authDelete(by = "id"): Promise<ResponseMessage<ValueType>> {
     // check/validate action
     if (by.toLowerCase() !== "id") {
       return await this.taskPermissionByParams(TaskTypes.DELETE);

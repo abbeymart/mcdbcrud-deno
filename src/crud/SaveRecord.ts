@@ -11,7 +11,7 @@ import {
     getResMessage,
     QueryHashCacheParamsType,
     QueryObjectResult,
-    ResponseMessage,
+    ResponseMessage, ValueType,
 } from "../../deps.ts";
 import { Crud } from "./Crud.ts";
 import {
@@ -22,7 +22,7 @@ import {
     CrudParamsType,
     excludeEmptyIdFields,
     LogRecordsType,
-    ModelOptionsType,
+    ModelOptionsType, ObjectType,
     TaskTypes,
 } from "../index.ts";
 import { isEmptyObject } from "./validate.ts";
@@ -34,14 +34,14 @@ import {
     computeUpdateQueryByParam,
 } from "./helpers/index.ts";
 
-class SaveRecord extends Crud {
+class SaveRecord<T extends ValueType> extends Crud<T> {
     protected modelOptions: ModelOptionsType;
 
     constructor(params: CrudParamsType, options: CrudOptionsType = {}) {
         super(params, options);
         // Set specific instance properties
         this.modelOptions =
-            options?.modelOptions && !isEmptyObject(options.modelOptions)
+            options?.modelOptions && !isEmptyObject(options?.modelOptions as unknown as ObjectType)
                 ? options.modelOptions
                 : {
                     activeStamp: false,
@@ -50,7 +50,7 @@ class SaveRecord extends Crud {
                 };
     }
 
-    async saveRecord(): Promise<ResponseMessage> {
+    async saveRecord(): Promise<ResponseMessage<ValueType>> {
         // Check/validate the databases
         const dbCheck = this.checkDb(this.appDb);
         if (dbCheck.code !== "success") {
@@ -69,7 +69,7 @@ class SaveRecord extends Crud {
         this.actionParams = excludeEmptyIdFields(this.actionParams);
 
         // determine update / create (new) items from actionParams
-        const {recordIds} = await this.computeItems();
+        const {recordIds} = this.computeItems();
 
         // validate createItems and updateItems
         if (this.createItems.length > 0 && this.updateItems.length > 0) {
@@ -264,6 +264,7 @@ class SaveRecord extends Crud {
                 this.recordIds = [];
                 this.queryParams = {};
                 // exclude any traces/presence of id, especially without concrete value ("", null, undefined)
+                // deno-lint-ignore no-unused-vars
                 const {id, ...saveParams} = item;
                 item = saveParams;
                 if (modelOptions.actorStamp) {
@@ -300,6 +301,7 @@ class SaveRecord extends Crud {
                 } else {
                     // create new document/record
                     // exclude any traces/presence of id, especially without concrete value ("", null, undefined)
+                    // deno-lint-ignore no-unused-vars
                     const {id, ...saveParams} = item;
                     const itemRec = saveParams;
                     if (modelOptions.actorStamp) {
@@ -324,7 +326,7 @@ class SaveRecord extends Crud {
         };
     }
 
-    async createRecord(): Promise<ResponseMessage> {
+    async createRecord(): Promise<ResponseMessage<ValueType>> {
         // validate actionParams
         if (this.createItems.length < 1) {
             return getResMessage("insertError", {
@@ -382,7 +384,7 @@ class SaveRecord extends Crud {
                     code   : "noLog",
                     message: "noLog",
                     value  : {},
-                } as ResponseMessage;
+                } as ResponseMessage<ValueType>;
                 if (this.logCreate || this.logCrud) {
                     const logRecs: LogRecordsType = {logRecords: this.createItems};
                     const logParams: AuditLogOptionsType = {
@@ -413,7 +415,7 @@ class SaveRecord extends Crud {
         }
     }
 
-    async updateRecord(): Promise<ResponseMessage> {
+    async updateRecord(): Promise<ResponseMessage<ValueType>> {
         if (this.updateItems.length < 1) {
             return getResMessage("insertError", {
                 message:
@@ -464,13 +466,13 @@ class SaveRecord extends Crud {
                     hash: this.table,
                     by  : "hash",
                 };
-                await deleteHashCache(cacheParams);
+                deleteHashCache(cacheParams);
                 // check the audit-log settings - to perform audit-log
                 let logRes = {
                     code   : "noLog",
                     message: "noLog",
                     value  : {},
-                } as ResponseMessage;
+                } as ResponseMessage<ValueType>;
                 if (this.logUpdate || this.logCrud) {
                     const logRecs: LogRecordsType = {logRecords: this.currentRecs};
                     const newLogRecs: LogRecordsType = {logRecords: this.updateItems};
@@ -504,7 +506,7 @@ class SaveRecord extends Crud {
         }
     }
 
-    async updateRecordById(): Promise<ResponseMessage> {
+    async updateRecordById(): Promise<ResponseMessage<ValueType>> {
         if (this.actionParams.length < 1) {
             return getResMessage("insertError", {
                 message:
@@ -518,11 +520,12 @@ class SaveRecord extends Crud {
         try {
             // check/validate update/upsert command for multiple records
             let recordsCount = 0;
-            let recordIds: Array<string> = [];
+            const recordIds: Array<string> = [];
             // update one record
             await transaction.begin();
             if (this.recordIds.length === 1) {
                 // destruct id /other attributes
+                // deno-lint-ignore no-unused-vars
                 const {id, ...otherParams} = this.actionParams[0];
                 const {updateQueryObject, ok, message} = computeUpdateQueryById(
                     this.table,
@@ -553,6 +556,7 @@ class SaveRecord extends Crud {
             // update multiple records
             if (this.recordIds.length > 1) {
                 // destruct id /other attributes
+                // deno-lint-ignore no-unused-vars
                 const {id, ...otherParams} = this.actionParams[0];
                 const {
                     updateQueryObject,
@@ -586,13 +590,13 @@ class SaveRecord extends Crud {
                     hash: this.table,
                     by  : "hash",
                 };
-                await deleteHashCache(cacheParams);
+                deleteHashCache(cacheParams);
                 // check the audit-log settings - to perform audit-log
                 let logRes = {
                     code   : "noLog",
                     message: "noLog",
                     value  : {},
-                } as ResponseMessage;
+                } as ResponseMessage<ValueType>;
                 if (this.logUpdate || this.logCrud) {
                     // include query-params for audit-log
                     const logRecs: LogRecordsType = {logRecords: this.currentRecs};
@@ -631,7 +635,7 @@ class SaveRecord extends Crud {
         }
     }
 
-    async updateRecordByParams(): Promise<ResponseMessage> {
+    async updateRecordByParams(): Promise<ResponseMessage<ValueType>> {
         // create a transaction session
         const transaction = this.appDb.createTransaction("mc-transaction-create", {
             isolation_level: "serializable",
@@ -639,6 +643,7 @@ class SaveRecord extends Crud {
         let recordsCount = 0;
         try {
             // destruct id /other attributes
+            // deno-lint-ignore no-unused-vars
             const {id, ...otherParams} = this.actionParams[0];
             // include item stamps: userId and date
             if (this.modelOptions.actorStamp) {
@@ -680,13 +685,13 @@ class SaveRecord extends Crud {
                     hash: this.table,
                     by  : "hash",
                 };
-                await deleteHashCache(cacheParams);
+                deleteHashCache(cacheParams);
                 // check the audit-log settings - to perform audit-log
                 let logRes = {
                     code   : "noLog",
                     message: "noLog",
                     value  : {},
-                } as ResponseMessage;
+                } as ResponseMessage<ValueType>;
                 if (this.logUpdate || this.logCrud) {
                     // include query-params for audit-log
                     const logRecs: LogRecordsType = {logRecords: this.currentRecs};

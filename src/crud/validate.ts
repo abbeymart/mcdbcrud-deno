@@ -1,4 +1,4 @@
-import { MessageObject, ObjectRefType, ObjectType } from "./types.ts";
+import {ObjectType} from "./types.ts";
 
 export const isProvided = (param: unknown): boolean => {
   // Verify the Required status
@@ -58,6 +58,7 @@ export const isUsername = (param: string): boolean => {
   return usernamePattern.test(param);
 };
 
+// deno-lint-ignore no-explicit-any
 export const isEmpty = (param: any): boolean => {
   "use strict";
   return (param === "" || param === null || param === undefined ||
@@ -65,7 +66,7 @@ export const isEmpty = (param: any): boolean => {
     (Array.isArray(param) && param.length === 0));
 };
 
-export const isEmptyObject = (val: ObjectRefType): boolean => {
+export const isEmptyObject = (val: ObjectType): boolean => {
   return !(Object.keys(val).length > 0 && Object.values(val).length > 0);
 };
 

@@ -4,12 +4,12 @@ import {
     mcTest,
     postTestResult,
 } from "../test_deps.ts";
+import { ValueType } from "../deps.ts"
 import {
-    CrudParamsType, DbConfigType,
+    CrudParamsType,
     GetResultType,
     newDbPg,
     newGetRecord,
-    ObjectType,
 } from "../src/index.ts";
 import {
     AuditModel,
@@ -20,35 +20,28 @@ import {
     GetTable,
     TestUserInfo,
 } from "./testData.ts";
-import { decryptEncodedFile } from "./config/config.ts";
+import { appDb, auditDb } from "./config/dbConfig.ts";
 
-let configOptions: ObjectType = {};
-try {
-    configOptions = decryptEncodedFile();
-} catch (e) {
-    console.error("\nConfiguration error: ", e);
-    Deno.exit(1);
-}
-const myDb = configOptions.appDb as DbConfigType;
+const myDb = appDb;
 myDb.options = {};
 
-const aDb = configOptions.auditDb as DbConfigType;
+const aDb = auditDb;
 aDb.options = {};
 
 const dbc = newDbPg(myDb, myDb.options);
 const auditDbc = newDbPg(aDb, aDb.options);
 
 (async () => {
-    const dbPool = await dbc.pgPool();
+    const dbPool = dbc.pgPool();
     const dbPoolClient = await dbPool.connect();
 
-    const auditDbPool = await auditDbc.pgPool();
+    const auditDbPool = auditDbc.pgPool();
 
     CrudParamOptions.auditDb = await auditDbPool.connect();
 
     const crudParams: CrudParamsType = {
         appDb      : dbPoolClient,
-        modelRef   : AuditModel as unknown as ObjectType,
+        modelRef   : AuditModel,
         table      : GetTable,
         userInfo   : TestUserInfo,
         recordIds  : [],
@@ -62,7 +55,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             crudParams.queryParams = {};
             const crud = newGetRecord(crudParams, CrudParamOptions);
             const res = await crud.getRecord();
-            const resValue = res.value as unknown as GetResultType;
+            const resValue = res.value as unknown as GetResultType<ValueType>;
             const recLen = resValue.records?.length || 0;
             const recCount = resValue.stats?.recordsCount || 0;
             assertEquals(res.code, "success", `response-code should be: success`);
@@ -87,7 +80,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             crudParams.queryParams = {};
             const crud = newGetRecord(crudParams, CrudParamOptions);
             const res = await crud.getRecord();
-            const resValue = res.value as unknown as GetResultType;
+            const resValue = res.value as unknown as GetResultType<ValueType>;
             const recLen = resValue.records?.length || 0;
             const recCount = resValue.stats?.recordsCount || 0;
             assertEquals(res.code, "success", `response-code should be: success`);
@@ -113,7 +106,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             crudParams.queryParams = GetAuditByParams;
             const crud = newGetRecord(crudParams, CrudParamOptions);
             const res = await crud.getRecord();
-            const resValue = res.value as unknown as GetResultType;
+            const resValue = res.value as unknown as GetResultType<ValueType>;
             const recLen = resValue.records?.length || 0;
             const recCount = resValue.stats?.recordsCount || 0;
             assertEquals(res.code, "success", `response-code should be: success`);
@@ -144,7 +137,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             CrudParamOptions.getAllRecords = true;
             const crud = newGetRecord(crudParams, CrudParamOptions);
             const res = await crud.getRecord();
-            const resValue = res.value as unknown as GetResultType;
+            const resValue = res.value as unknown as GetResultType<ValueType>;
             const recLen = resValue.records?.length || 0;
             const recCount = resValue.stats?.recordsCount || 0;
             assertEquals(res.code, "success", `response-code should be: success`);
@@ -177,7 +170,7 @@ const auditDbc = newDbPg(aDb, aDb.options);
             CrudParamOptions.getAllRecords = true;
             const crud = newGetRecord(crudParams, CrudParamOptions);
             const res = await crud.getRecord();
-            const resValue = res.value as unknown as GetResultType;
+            const resValue = res.value as unknown as GetResultType<ValueType>;
             const recLen = resValue.records?.length || 0;
             const recCount = resValue.stats?.recordsCount || 0;
             assertEquals(res.code, "success", `response-code should be: success`);

@@ -11,7 +11,7 @@ import {
   PoolClient,
   QueryObjectOptions,
   QueryObjectResult,
-  ResponseMessage,
+  ResponseMessage, ValueType
 } from "../../deps.ts";
 import {
   ActionParamsType,
@@ -43,7 +43,7 @@ import {
 } from "./helpers/index.ts";
 import { toCamelCase } from "./utils.ts";
 
-export class Crud {
+export class Crud<T extends ValueType> {
   protected params: CrudParamsType;
   protected readonly modelRef: ActionParamType;
   protected readonly appDb: PoolClient;
@@ -207,7 +207,7 @@ export class Crud {
   }
 
   // checkDb checks / validate appDb
-  checkDb(dbConnect: Pool | PoolClient): ResponseMessage {
+  checkDb<T>(dbConnect: Pool | PoolClient): ResponseMessage<T> {
     if (dbConnect) {
       return getResMessage("success", {
         message: "valid database handler",
@@ -311,10 +311,10 @@ export class Crud {
   }
 
   // getCurrentRecords fetch records by recordIds, queryParams or all-records, limited by this.limit and this.skip.
-  async getCurrentRecords(by = ""): Promise<ResponseMessage> {
+  async getCurrentRecords<T>(by = ""): Promise<ResponseMessage<T>> {
     try {
       // validate database
-      const validDb = this.checkDb(this.appDb);
+      const validDb = this.checkDb<T>(this.appDb);
       if (validDb.code !== "success") {
         return validDb;
       }
@@ -361,7 +361,7 @@ export class Crud {
                 selectQuery: selectQueryResult.selectQueryObject.selectQuery,
                 fieldValues: selectQueryResult.selectQueryObject.fieldValues,
                 recordIds: this.recordIds,
-              },
+              } as T,
             });
           }
           // get records
@@ -390,7 +390,7 @@ export class Crud {
                 selectQuery: selectQueryResult.selectQueryObject.selectQuery,
                 fieldValues: selectQueryResult.selectQueryObject.fieldValues,
                 queryParams: this.queryParams,
-              },
+              } as T,
             });
           }
           // query records
@@ -413,7 +413,7 @@ export class Crud {
               value: {
                 selectQuery: selectQueryResult.selectQueryObject.selectQuery,
                 fieldValues: selectQueryResult.selectQueryObject.fieldValues,
-              },
+              } as T,
             });
           }
           // query records
@@ -441,7 +441,7 @@ export class Crud {
               recordsCount: records.length,
               totalRecordsCount: totalRows,
             },
-          },
+          } as T,
         });
       } else {
         return getResMessage("notFound", {
@@ -449,14 +449,13 @@ export class Crud {
           value: {
             selectQuery: selectQueryResult.selectQueryObject.selectQuery,
             fieldValues: selectQueryResult.selectQueryObject.fieldValues,
-          },
+          } as T,
         });
       }
     } catch (e) {
       console.error(e);
       return getResMessage("notFound", {
         message: `Error retrieving current document/record(s): ${e.message}`,
-        value: {},
       });
     }
   }
@@ -527,22 +526,22 @@ export class Crud {
   }
 
   // checkAccess validate if current CRUD task is permitted based on defined/assigned roles
-  async checkTaskAccess(
+  async checkTaskAccess<T>(
     recordIds: Array<string> = [],
-  ): Promise<ResponseMessage> {
+  ): Promise<ResponseMessage<T>> {
     try {
       // validate databases
-      const validAccessDb = await this.checkDb(this.accessDb);
+      const validAccessDb = this.checkDb<T>(this.accessDb);
       if (validAccessDb.code !== "success") {
         return validAccessDb;
       }
-      const validServiceDb = await this.checkDb(this.appDb);
+      const validServiceDb = this.checkDb<T>(this.appDb);
       if (validServiceDb.code !== "success") {
         return validServiceDb;
       }
       // perform crud-operation
       // check logged-in user access status and record
-      const accessRes = await this.checkLoginStatus();
+      const accessRes = await this.checkLoginStatus<T>();
       if (accessRes.code !== "success") {
         return accessRes;
       }
@@ -637,20 +636,20 @@ export class Crud {
         ownerPermitted: ownerPermitted,
       };
       if (permittedRes.isActive && (permittedRes.isAdmin || ownerPermitted)) {
-        return getResMessage("success", {
-          value: permittedRes as unknown as Record<string, unknown>,
+        return getResMessage<T>("success", {
+          value: permittedRes as T,
         });
       }
       const recLen = permittedRes.roleServices?.length || 0;
       if (permittedRes.isActive && recLen > 0 && recLen >= recordIds.length) {
         return getResMessage("success", {
-          value: permittedRes as unknown as Record<string, unknown>,
+          value: permittedRes as T,
         });
       }
       return getResMessage("unAuthorized", {
         message:
           `Access permitted for ${recordIds.length} of ${recLen} service-items/records`,
-        value: permittedRes as unknown as Record<string, unknown>,
+        value: permittedRes as T,
       });
     } catch (e) {
       console.error("check-access-error: ", e);
@@ -660,9 +659,9 @@ export class Crud {
 
   // taskPermissionById method determines the access permission by owner, role/group (on table/table or doc/record(s)) or admin
   // for various task-types: "create", "update", "delete"/"remove", "read"
-  async taskPermissionById(
+  async taskPermissionById<T>(
     taskType: TaskTypes | string,
-  ): Promise<ResponseMessage> {
+  ): Promise<ResponseMessage<T>> {
     try {
       // # validation access variables
       let taskPermitted = false,
@@ -687,7 +686,7 @@ export class Crud {
       recordIds = this.recordIds;
 
       // check role-based access
-      const accessRes = await this.checkTaskAccess(recordIds);
+      const accessRes = await this.checkTaskAccess<T>(recordIds);
       if (accessRes.code !== "success") {
         return accessRes;
       }
@@ -847,12 +846,12 @@ export class Crud {
       };
       if (taskPermitted) {
         return getResMessage("success", {
-          value: value,
+          value: value as T,
           message: "action authorised / permitted",
         });
       } else {
         return getResMessage("unAuthorized", {
-          value: value,
+          value: value as T,
           message:
             "You are not authorized to perform the requested action/task",
         });
@@ -860,7 +859,7 @@ export class Crud {
     } catch (e) {
       const ok: OkResponse = { ok: false };
       return getResMessage("unAuthorized", {
-        value: ok as unknown as Record<string, boolean>,
+        value: ok as T,
         message: e.message,
       });
     }
@@ -868,9 +867,9 @@ export class Crud {
 
   // taskPermissionByParams method determines the access permission by owner, role/group (on table/table or doc/record(s)) or admin
   // for various task-types: "create", "update", "delete"/"remove", "read"
-  async taskPermissionByParams(
+  async taskPermissionByParams<T>(
     taskType: TaskTypes | string,
-  ): Promise<ResponseMessage> {
+  ): Promise<ResponseMessage<T>> {
     try {
       // ids of records, from queryParams
       const recordIds: Array<string> = []; // reset recordIds instance value
@@ -896,14 +895,14 @@ export class Crud {
   }
 
   // checkLoginStatus method checks if the user exists and has active login status/token
-  async checkLoginStatus(): Promise<ResponseMessage> {
+  async checkLoginStatus<T>(): Promise<ResponseMessage<T>> {
     try {
       // validate databases
-      const validDb = await this.checkDb(this.appDb);
+      const validDb = this.checkDb<T>(this.appDb);
       if (validDb.code !== "success") {
         return validDb;
       }
-      const validAccessDb = await this.checkDb(this.accessDb);
+      const validAccessDb = this.checkDb<T>(this.accessDb);
       if (validAccessDb.code !== "success") {
         return validAccessDb;
       }
@@ -969,7 +968,7 @@ export class Crud {
 
       return getResMessage("success", {
         message: "Access Permitted: ",
-        value: checkAccessValue as unknown as Record<string, unknown>,
+        value: checkAccessValue as T,
       });
     } catch (e) {
       console.error("check-login-status-error:", e);

@@ -1,16 +1,16 @@
 import { assertEquals, mcTest, postTestResult } from "../test_deps.ts";
-import { DbConfigType, newDbPg } from "../src/index.ts";
-import { decryptEncodedFile, ObjectType } from "./config/config.ts";
+import { newDbPg } from "../src/index.ts";
+import { auditDb } from "./config/dbConfig.ts";
+
+/**
+ * RUN command
+ * ```shell
+ * $ deno run --allow-net --allow-env test/dbc.test.ts
+ * ```
+ */
 
 // test-data: db-configuration settings
-let configOptions: ObjectType = {};
-try {
-    configOptions = decryptEncodedFile();
-} catch (e) {
-    console.error("\nConfiguration error: ", e);
-    Deno.exit(1);
-}
-const myDb = configOptions.auditDb as DbConfigType;
+const myDb = auditDb;
 myDb.options = {};
 
 const dbc = newDbPg(myDb, myDb.options);
@@ -30,7 +30,7 @@ const dbc = newDbPg(myDb, myDb.options);
             } finally {
                 await dbc.closePgClient();
             }
-            assertEquals(pResult, true, `client-result-connected: true`);
+            assertEquals(pResult, true, `client-result-connected should be: true`);
         },
     });
 
@@ -39,17 +39,18 @@ const dbc = newDbPg(myDb, myDb.options);
         testFunc: async () => {
             let pResult = false;
             try {
-                console.log("dbc-client-connected: ");
                 const client = await dbc.pgPool().connect();
+                console.log("dbc-pool-client-connected: ");
                 client.release();
+                console.log("dbc-pool-client-connection-released: ");
                 pResult = true;
             } catch (e) {
-                console.log("dbc-client-connection-error: ", e);
+                console.log("dbc-pool-client-connection-error: ", e);
                 pResult = false;
             } finally {
                 await dbc.closePgPool();
             }
-            assertEquals(pResult, true, `client-result-connected: true`);
+            assertEquals(pResult, true, `pool-client-result-connected should be: true`);
         },
     });
 
@@ -59,15 +60,15 @@ const dbc = newDbPg(myDb, myDb.options);
             let pResult = false;
             try {
                 await dbc.pgPool().connect();
-                console.log("pool-client-connected: ");
+                console.log("db-pool-connected: ");
                 pResult = true;
             } catch (e) {
-                console.log("pool-client-connect-error: ", e);
+                console.log("db-pool-connect-error: ", e);
                 pResult = false;
             } finally {
                 await dbc.closePgPool();
             }
-            assertEquals(pResult, true, `pool-result-connected: true`);
+            assertEquals(pResult, true, `db-pool-result-connected should be: true`);
         },
     });
 

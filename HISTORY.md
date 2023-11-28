@@ -1,5 +1,10 @@
 # Historical logs
 
+## Version 0.3.0
+
+- Release date: Nov 28, 2023
+- Refactor-generic-types-and-cleanup-unused-refs-v0.3.0
+
 ## Version 0.2.6
 
 - Release date: Dec 26, 2022

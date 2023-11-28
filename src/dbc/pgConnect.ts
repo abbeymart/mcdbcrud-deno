@@ -9,10 +9,10 @@ export class DbPg {
     private readonly username: string;
     private readonly password: string;
     private readonly database: string;
-    private readonly location: string;
     private readonly port: number;
     private readonly poolSize: number;
-    private readonly checkAccess: boolean;
+    // private readonly location: string;
+    // private readonly checkAccess: boolean;
     private readonly connectionString: string;
     private readonly config: ClientConfiguration;
     private dbPool: Pool;
@@ -20,15 +20,16 @@ export class DbPg {
     private readonly encodedUsername: string;
     private readonly encodedPassword: string;
 
-    constructor(dbConfig: DbConfigType, options?: DbConnectionOptionsType) {
+    constructor(dbConfig: DbConfigType, _options?: DbConnectionOptionsType) {
         this.hostname = dbConfig?.hostname || "";
         this.username = dbConfig?.username || "";
         this.password = dbConfig?.password || "";
         this.database = dbConfig?.database || "";
-        this.location = dbConfig?.location || "";
+
         this.port = Number(dbConfig?.port) || 5432;
         this.poolSize = dbConfig?.poolSize || 20;
-        this.checkAccess = options?.checkAccess !== false;
+        // this.location = dbConfig?.location || "";
+        // this.checkAccess = options?.checkAccess !== false;
         // Encode username and password for the connection string
         this.encodedUsername = encodeURIComponent(this.username);
         this.encodedPassword = encodeURIComponent(this.password);
@@ -113,7 +114,7 @@ export class DbPg {
                 const res = await poolClient.queryObject("SELECT NOW() as now");
                 console.log("pgSQL-test-pgPool-query(1)-result: ", res.rows[0]);
             } finally {
-                await poolClient.release();
+                poolClient.release();
                 console.log("pgSQL-test-pgPool-query(1) connection released");
             }
         })().catch((error) => {

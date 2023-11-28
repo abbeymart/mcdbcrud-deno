@@ -1,6 +1,6 @@
 import { assertEquals, mcTest, postTestResult } from "../test_deps.ts";
 import {
-    AuditLogTypes, LogRecordsType, newAuditLog, newDbPg,
+    AuditLogOptionsType, LogRecordsType, newAuditLog, newDbPg,
 } from "../src/index.ts";
 import { auditDb } from "./config/dbConfig.ts";
 
@@ -33,13 +33,14 @@ const myDb = auditDb;
 myDb.options = {};
 
 const dbc = newDbPg(myDb, myDb.options);
+// expected db-connection result
+const mcLogResult = {auditDb: dbc, auditTable: "audits"};
 
 (async () => {
-    const dbClient = await dbc.pgPool().connect();
-    // expected db-connection result
-    const mcLogResult = {auditDb: dbClient, auditTable: "audits"};
+    const dbPool = dbc.pgPool();
+    const dbPoolClient = await dbPool.connect();
     // audit-log instance
-    const mcLog = newAuditLog(dbClient, "audits");
+    const mcLog = newAuditLog(dbPoolClient, "audits");
     await mcTest({
         name    : "should connect to the DB and return an instance object",
         testFunc: () => {
@@ -54,10 +55,11 @@ const dbc = newDbPg(myDb, myDb.options);
     await mcTest({
         name    : "should store create-transaction log and return success:",
         testFunc: async () => {
-            const res = await mcLog.auditLog(AuditLogTypes.CREATE, {
+            const params: AuditLogOptionsType = {
                 tableName : tableName,
                 logRecords: recs,
-            }, userId);
+            };
+            const res = await mcLog.createLog(userId, params);
             assertEquals(res.code, "success", `res.Code should be: success`);
             assertEquals(
                 res.message.includes("successfully"),
@@ -70,11 +72,12 @@ const dbc = newDbPg(myDb, myDb.options);
     await mcTest({
         name    : "should store update-transaction log and return success:",
         testFunc: async () => {
-            const res = await mcLog.auditLog(AuditLogTypes.UPDATE, {
+            const params: AuditLogOptionsType = {
                 tableName    : tableName,
                 logRecords   : recs,
                 newLogRecords: newRecs,
-            }, userId);
+            };
+            const res = await mcLog.updateLog(userId, params);
             assertEquals(res.code, "success", `res.Code should be: success`);
             assertEquals(
                 res.message.includes("successfully"),
@@ -86,10 +89,11 @@ const dbc = newDbPg(myDb, myDb.options);
     await mcTest({
         name    : "should store read-transaction log and return success:",
         testFunc: async () => {
-            const res = await mcLog.auditLog(AuditLogTypes.READ, {
+            const params: AuditLogOptionsType = {
                 tableName : tableName,
                 logRecords: readP,
-            }, userId);
+            };
+            const res = await mcLog.readLog(params, userId);
             assertEquals(res.code, "success", `res.Code should be: success`);
             assertEquals(
                 res.message.includes("successfully"),
@@ -101,10 +105,11 @@ const dbc = newDbPg(myDb, myDb.options);
     await mcTest({
         name    : "should store delete-transaction log and return success:",
         testFunc: async () => {
-            const res = await mcLog.auditLog(AuditLogTypes.DELETE, {
+            const params: AuditLogOptionsType = {
                 tableName : tableName,
                 logRecords: recs,
-            }, userId);
+            };
+            const res = await mcLog.deleteLog(userId, params);
             assertEquals(res.code, "success", `res.Code should be: success`);
             assertEquals(
                 res.message.includes("successfully"),
@@ -116,10 +121,11 @@ const dbc = newDbPg(myDb, myDb.options);
     await mcTest({
         name    : "should store login-transaction log and return success:",
         testFunc: async () => {
-            const res = await mcLog.auditLog(AuditLogTypes.LOGIN, {
-                tableName : tableName,
+            const params: AuditLogOptionsType = {
+                tableName : "users",
                 logRecords: recs,
-            }, userId);
+            };
+            const res = await mcLog.loginLog(params, userId);
             assertEquals(res.code, "success", `res.Code should be: success`);
             assertEquals(
                 res.message.includes("successfully"),
@@ -132,10 +138,11 @@ const dbc = newDbPg(myDb, myDb.options);
     await mcTest({
         name    : "should store logout-transaction log and return success:",
         testFunc: async () => {
-            const res = await mcLog.auditLog(AuditLogTypes.LOGOUT, {
-                tableName : tableName,
+            const params: AuditLogOptionsType = {
+                tableName : "users",
                 logRecords: recs,
-            }, userId);
+            };
+            const res = await mcLog.logoutLog(userId, params);
             assertEquals(res.code, "success", `res.Code should be: success`);
             assertEquals(
                 res.message.includes("successfully"),
@@ -148,10 +155,11 @@ const dbc = newDbPg(myDb, myDb.options);
     await mcTest({
         name    : "should return paramsError for incomplete/undefined inputs:",
         testFunc: async () => {
-            const res = await mcLog.auditLog(AuditLogTypes.CREATE, {
+            const params: AuditLogOptionsType = {
                 tableName : "",
                 logRecords: recs,
-            }, userId);
+            };
+            const res = await mcLog.createLog("", params);
             assertEquals(res.code, "paramsError", `res.Code should be: paramsError`);
             assertEquals(
                 res.message.includes("Table or Collection name is required"),

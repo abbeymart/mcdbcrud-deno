@@ -22,7 +22,7 @@ export interface AuditType {
   logAt: Date;
 }
 
-export const AuditModel: AuditType = {
+export const AuditModel: ActionParamType = {
   id: "",
   tableName: "",
   logRecords: {},

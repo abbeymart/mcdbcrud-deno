@@ -4,7 +4,7 @@ import {
   CrudParamsType,
   TaskTypes,
 } from "./types.ts";
-import { getResMessage, ResponseMessage } from "../../deps.ts";
+import { getResMessage, ResponseMessage, ValueType } from "../../deps.ts";
 import { isEmptyObject } from "./validate.ts";
 
 // checkTaskType checks and returns the database task type - create, update, delete from actionParams/records.
@@ -30,9 +30,9 @@ export function checkTaskType(params: CrudParamsType): string {
 }
 
 // validateActionParams function validates the actionParams - must be an array or 1 or more item(s).
-export function validateActionParams(
+export function validateActionParams<T extends  ValueType>(
   actParams: ActionParamsType = [],
-): ResponseMessage {
+): ResponseMessage<T> {
   if (actParams.length < 1) {
     return getResMessage("validateError", {
       message:

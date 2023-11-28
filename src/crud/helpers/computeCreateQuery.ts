@@ -1,4 +1,5 @@
-import { ActionParamsType, CreateQueryResult, ValueType } from "../types.ts";
+import { ActionParamsType, CreateQueryResult } from "../types.ts";
+import {ValueType} from"../../../deps.ts";
 import { camelToUnderscore } from "../utils.ts";
 
 const errMessage = (message: string) => {

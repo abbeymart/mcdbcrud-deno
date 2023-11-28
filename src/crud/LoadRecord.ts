@@ -9,7 +9,7 @@ import {
   getParamsMessage,
   getResMessage,
   PoolClient,
-  ResponseMessage,
+  ResponseMessage, ValueType,
 } from "../../deps.ts";
 import { validateLoadParams } from "./ValidateCrudParam.ts";
 import { checkDb } from "../dbc/index.ts";
@@ -21,7 +21,7 @@ import {
 } from "./types.ts";
 import { isEmptyObject } from "./validate.ts";
 
-class LoadRecord {
+class LoadRecord<T extends ValueType> {
   protected params: CrudParamsType;
   protected appDb: PoolClient;
   protected table: string;
@@ -55,10 +55,23 @@ class LoadRecord {
       ? options.maxQueryLimit
       : 10000;
   }
-
-  async loadRecord(): Promise<ResponseMessage> {
+  async removeRecord(): Promise<ResponseMessage<T>> {
     // Check/validate the attributes / parameters
-    const dbCheck = checkDb(this.appDb);
+    const dbCheck = checkDb<T>(this.appDb);
+    if (dbCheck.code !== "success") {
+      return dbCheck;
+    }
+    const res = await this.appDb.queryObject("delete-query")
+
+    return getResMessage("unknown", {
+      message: "work in progress",
+      value: res as T,
+    })
+  }
+
+  async loadRecord<T>(): Promise<ResponseMessage<T>> {
+    // Check/validate the attributes / parameters
+    const dbCheck = checkDb<T>(this.appDb);
     if (dbCheck.code !== "success") {
       return dbCheck;
     }
@@ -76,7 +89,7 @@ class LoadRecord {
         Please do not send more than ${this.maxQueryLimit} records to load at a time`;
     }
     if (!isEmptyObject(errors)) {
-      return getParamsMessage(errors, "paramsError");
+      return getParamsMessage<T>(errors, "paramsError") as ResponseMessage<T>;
     }
 
     // create/load multiple records
@@ -94,21 +107,21 @@ class LoadRecord {
             value: {
               docCount: res.rows.length,
               totalCount: totalRecordCount,
-            },
+            } as T,
           });
         }
         return getResMessage("insertError", {
           message: "Error-inserting/creating new record(s). Please retry.",
           value: {
             docCount: res.rows.length,
-          },
+          } as T,
         });
       } catch (error) {
         return getResMessage("insertError", {
           message: "Error-inserting/creating new record(s). Please retry.",
           value: {
             error,
-          },
+          } as T,
         });
       }
     }

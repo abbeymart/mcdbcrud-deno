@@ -4,8 +4,9 @@ import {
   MultiUpdateQueryResult,
   QueryParamsType,
   UpdateQueryObject,
-  UpdateQueryResult, ValueType,
+  UpdateQueryResult,
 } from "../types.ts";
+import {ValueType} from"../../../deps.ts";
 import { computeWhereQuery } from "./computeWhereQuery.ts";
 import { camelToUnderscore } from "../utils.ts";
 import { isEmptyObject } from "../validate.ts";

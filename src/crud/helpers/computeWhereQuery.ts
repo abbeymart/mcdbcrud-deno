@@ -1,4 +1,5 @@
-import { QueryParamsType, ValueType, WhereQueryResult } from "../types.ts";
+import { QueryParamsType, WhereQueryResult } from "../types.ts";
+import {ValueType} from"../../../deps.ts";
 import { camelToUnderscore } from "../utils.ts";
 import { isEmptyObject } from "../validate.ts";
 
