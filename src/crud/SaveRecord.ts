@@ -232,7 +232,7 @@ class SaveRecord<T extends ValueType> extends Crud<T> {
         // cases - actionParams.length === 1 OR > 1
         if (this.actionParams.length === 1) {
             let item = this.actionParams[0];
-            if (this.recordIds.length > 0 || !isEmptyObject(this.queryParams)) {
+            if (this.recordIds.length > 0 || !isEmptyObject(this.queryParams)  && (!item["id"] || item["id"] ==="")) {
                 // update existing record(s), by recordIds or queryParams
                 if (modelOptions.actorStamp) {
                     item["updatedBy"] = this.userId;
@@ -243,7 +243,7 @@ class SaveRecord<T extends ValueType> extends Crud<T> {
                 if (modelOptions.activeStamp && item.isActive === undefined) {
                     item["isActive"] = true;
                 }
-                updateItems.push(item);
+                // updateItems.push(item);
             } else if (item["id"] && item["id"] !== "") {
                 // update existing document/record, by recordId
                 this.recordIds = [];

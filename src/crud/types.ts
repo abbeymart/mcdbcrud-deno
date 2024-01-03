@@ -1,20 +1,6 @@
 import { AuditLog } from "../auditlog/index.ts";
 import { PoolClient, ResponseMessage, ValueType } from "../../deps.ts";
 
-// export type ValueType =
-//     | Record<string, unknown>
-//     | Array<Record<string, unknown>>
-//     | string
-//     | number
-//     | Array<string>
-//     | Array<number>
-//     | Date
-//     | Array<Date>
-//     | boolean
-//     | Array<boolean>
-//     | { [key: string]: ValueType }
-//     | unknown;
-
 export interface ObjectType {
     [key: string]: ValueType;
 }
@@ -74,6 +60,8 @@ export enum TaskTypes {
     READ = "read",
     DELETE = "delete",
     REMOVE = "remove",
+    APPLOG ="applog",
+    SYSLOG = "syslog",
     UNKNOWN = "unknown",
 }
 
@@ -104,7 +92,7 @@ export interface BaseModelType {
     updatedAt?: Date;
     deletedBy?: string;
     deletedAt?: Date;
-    appId?: string | null; // application-id in a multi-hosted apps environment (e.g. cloud-env)
+    appId?: string; // application-id in a multi-hosted apps environment (e.g. cloud-env)
 }
 
 export interface RelationBaseModelType {
@@ -126,7 +114,7 @@ export interface UserProfileType extends BaseModelType {
     recoveryEmail?: string;
     phone?: string;
     emails?: Array<EmailAddressType>;
-    roleId?: string | null;
+    roleId?: string;
     dob?: Date;
     twoFactorAuth?: boolean;
     authAgent?: string;
@@ -137,9 +125,9 @@ export interface UserProfileType extends BaseModelType {
 }
 
 export interface UserType extends BaseModelType {
-    username: string; // must be unique (=> controller)
-    password: string; // must be encrypted before save (=> controller)
-    email: string; // must be unique (=> controller)
+    username?: string; // must be unique (=> controller)
+    password?: string; // must be encrypted before save (=> controller)
+    email?: string; // must be unique (=> controller)
     roleIds?: Array<string>; // default => [] (=> controller)
     profile: UserProfileType;
     acceptTerm: boolean; // must be true at registration (validate)
@@ -194,7 +182,7 @@ export interface CheckAccessType {
     roleIds: Array<string>;
     isActive: boolean;
     isAdmin: boolean;
-    profile: UserProfileType;
+    profile?: UserProfileType;
     roleServices?: Array<RoleServiceResponseType>;
     tableId?: string;
 }
@@ -281,7 +269,7 @@ export interface ActionParamTaskType {
 export interface AppParamsType {
     appId: string;
     accessKey: string;
-    appName: string; // optional app-name
+    appName: string;
     category: string;
     serviceId: string;
     serviceTag: string;

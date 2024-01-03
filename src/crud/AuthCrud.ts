@@ -9,7 +9,7 @@ import { Crud } from "./Crud.ts";
 import { CrudOptionsType, CrudParamsType, TaskTypes } from "./types.ts";
 import { ResponseMessage, ValueType, } from "../../deps.ts";
 
-export class AuthCrud extends Crud {
+export class AuthCrud<T extends ValueType> extends Crud<T> {
   constructor(params: CrudParamsType, options: CrudOptionsType = {}) {
     super(params, options);
   }

@@ -1,5 +1,10 @@
 # Historical logs
 
+## Version 0.4.0
+
+- Release date: Jan 05, 2024
+- Refactor-generic-types-and-set-fields-as-optional-v0.4.0
+
 ## Version 0.3.0
 
 - Release date: Nov 28, 2023

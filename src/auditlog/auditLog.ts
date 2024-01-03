@@ -785,16 +785,19 @@ class AuditLog {
                 message: errorMessage,
             });
         }
+        // set optional default values
+        params.tableName = params.tableName || "not-specified"
+        params.logType = params.logType || AuditLogTypes.CREATE
 
         try {
             // insert audit record
             const queryText =
                 `INSERT INTO ${this.auditTable}(table_name, log_records, log_type, log_by, log_at) VALUES($1, $2, $3, $4, $5);`;
             const values = [
-                params.tableName || "not-specified",
+                params.tableName,
                 params.logRecords,
-                AuditLogTypes.CREATE,
-                params.logBy || "not-specified",
+                params.logType,
+                params.logBy,
                 new Date(),
             ];
             const query: QueryOptions = {
